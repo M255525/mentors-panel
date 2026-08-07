@@ -34,6 +34,21 @@
   .wrap{max-width:1180px;margin:0 auto;padding:0 20px 80px;}
 
   /* ---------- Topbar ---------- */
+  #marqueeBar{
+    position:fixed; top:0; left:0; right:0; height:30px; z-index:50;
+    background:var(--bg-panel); border-bottom:1px solid var(--line);
+    overflow:hidden; display:none; align-items:center;
+  }
+  #marqueeBar.show{display:flex;}
+  #marqueeTrack{
+    display:inline-block; white-space:nowrap; padding-left:100%;
+    font-size:.8rem; font-weight:600; color:var(--accent);
+    animation:marquee-scroll 30s linear infinite;
+  }
+  @keyframes marquee-scroll{ from{transform:translateX(0)} to{transform:translateX(-50%)} }
+  body.has-marquee{padding-top:30px;}
+  body.has-marquee .topbar{top:30px;}
+
   .topbar{
     position:sticky; top:0; z-index:40;
     background: rgba(244,241,236,.92);
@@ -67,6 +82,8 @@
     display:flex; align-items:center; gap:8px;
   }
   .section-hint{font-size:.82rem; color:var(--ink-soft); margin:0 0 16px;}
+  .rounds-header{display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:6px;}
+  .rounds-actions{display:flex; gap:8px;}
 
   /* ---------- Persona grid (name-card wall) ---------- */
   .persona-grid{
@@ -150,6 +167,7 @@
   }
   @keyframes spin{to{transform:rotate(360deg);}}
   .quote-tier-note{font-size:.7rem; background:var(--warn-bg); color:var(--warn-ink); padding:4px 8px; border-radius:6px; margin-top:8px;}
+  .truncated-note{font-size:.72rem; background:var(--warn-bg); color:var(--warn-ink); padding:4px 8px; border-radius:6px; margin-top:8px; display:inline-block;}
 
   /* ---------- Modals ---------- */
   .modal-overlay{
@@ -199,6 +217,50 @@
 </head>
 <body>
 
+<div id="marqueeBar"><div id="marqueeTrack"></div></div>
+<script>
+(function () {
+  "use strict";
+  var MARQUEE_CHECK_URL = "https://script.google.com/macros/s/AKfycbwKX0DNNbY8y4nf90BFTHtxgfqJcHHcZasRrgycl4QAe52_hkjMWSkYk4xOsqU-JPCROw/exec";
+  var STORAGE_KEY = "mentorsMarquee";
+  var REFRESH_MS = 20 * 60 * 1000;
+
+  var bar = document.getElementById("marqueeBar");
+  var track = document.getElementById("marqueeTrack");
+
+  function loadCache() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"); } catch (e) { return []; }
+  }
+  function saveCache(items) {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(items)); } catch (e) {}
+  }
+  function render(items) {
+    if (!items || !items.length) return;
+    var joined = items.join("　★　");
+    track.textContent = joined + "　★　" + joined;
+    bar.classList.add("show");
+    document.body.classList.add("has-marquee");
+    var width = track.scrollWidth / 2;
+    track.style.animationDuration = Math.max(width / 80, 10) + "s";
+  }
+  function fetchMarquee() {
+    fetch(MARQUEE_CHECK_URL, { method: "POST", body: JSON.stringify({ serial: "" }) })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (data && Array.isArray(data.marquee) && data.marquee.length) {
+          saveCache(data.marquee);
+          render(data.marquee);
+        }
+      })
+      .catch(function () {});
+  }
+
+  render(loadCache());
+  fetchMarquee();
+  setInterval(fetchMarquee, REFRESH_MS);
+})();
+</script>
+
 <div class="topbar">
   <div class="topbar-inner">
     <div class="brand">
@@ -232,17 +294,23 @@
   </section>
 
   <section id="roundsSection" style="display:none;">
-    <h2 class="section-title">對話紀錄</h2>
+    <div class="rounds-header">
+      <h2 class="section-title">對話紀錄</h2>
+      <div class="rounds-actions">
+        <button class="btn btn-sm" id="btnDownload" type="button">⬇ 下載txt</button>
+        <button class="btn btn-sm" id="btnClear" type="button">🗑 清除對話</button>
+      </div>
+    </div>
     <div id="roundsContainer"></div>
   </section>
 
 </div>
 
 <footer class="site-footer">
-  本站所有回覆皆為AI依公開資料生成的角色扮演框架推斷，非人物本人真實觀點或授權內容，僅供啟發與練習用途參考。
+  本站所有回覆皆為AI依公開資料生成的角色扮演框架推斷，非人物本人真實觀點或授權內容，僅供啟發與練習用途參考，請勿作為法律、財務、醫療或其他專業領域的正式建議依據。
   API金鑰僅存於您瀏覽器的localStorage，網站本身不會、也無法取得您的金鑰。
   <br>
-  <a href="manual.html">操作手冊</a>
+  製作：Mark Tsai｜<a href="mailto:tsaimark@gmail.com">tsaimark@gmail.com</a>｜<a href="manual.html">操作手冊</a>
 </footer>
 
 <!-- 免責聲明 / 特殊警語 modal -->
@@ -312,7 +380,8 @@ const QUICK_EXAMPLES = [
   {label:"工作計畫", text:"我要規劃一個新專案的第一個月，你認為最該優先確認的是什麼？"}
 ];
 
-const MAX_REPLY_TOKENS = 1400;
+const MAX_REPLY_TOKENS = 2048;
+const MAX_CONTINUE_ROUNDS = 5;
 
 /* ============ 狀態 ============ */
 
@@ -368,13 +437,18 @@ async function callLLM(provider, model, apiKey, systemPrompt, messages, onRetry)
       if(d.stop_reason === "refusal") throw new Error("模型拒絕了這個請求（refusal）");
       const t = (d.content || []).filter(b => b.type === "text").map(b => b.text).join("");
       if(!t) throw new Error("回應中沒有文字內容");
-      return t;
+      return {text: t, truncated: d.stop_reason === "max_tokens"};
     };
   } else if(provider === "openai"){
     url = "https://api.openai.com/v1/chat/completions";
     headers = {"content-type": "application/json", "authorization": "Bearer " + apiKey};
     body = {model, max_tokens: MAX_REPLY_TOKENS, messages: [{role: "system", content: systemPrompt}, ...messages]};
-    extract = (d) => d.choices?.[0]?.message?.content || (() => { throw new Error("回應中沒有文字內容"); })();
+    extract = (d) => {
+      const choice = d.choices?.[0];
+      const t = choice?.message?.content;
+      if(!t) throw new Error("回應中沒有文字內容");
+      return {text: t, truncated: choice?.finish_reason === "length"};
+    };
   } else if(provider === "gemini"){
     url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
     headers = {"content-type": "application/json", "x-goog-api-key": apiKey};
@@ -384,15 +458,21 @@ async function callLLM(provider, model, apiKey, systemPrompt, messages, onRetry)
       contents: messages.map(m => ({role: m.role === "assistant" ? "model" : "user", parts: [{text: m.content}]}))
     };
     extract = (d) => {
-      const t = (d.candidates?.[0]?.content?.parts || []).map(p => p.text || "").join("");
+      const cand = d.candidates?.[0];
+      const t = (cand?.content?.parts || []).map(p => p.text || "").join("");
       if(!t) throw new Error("回應中沒有文字內容");
-      return t;
+      return {text: t, truncated: cand?.finishReason === "MAX_TOKENS"};
     };
   } else if(provider === "openrouter"){
     url = "https://openrouter.ai/api/v1/chat/completions";
     headers = {"content-type": "application/json", "authorization": "Bearer " + apiKey};
     body = {model, max_tokens: MAX_REPLY_TOKENS, messages: [{role: "system", content: systemPrompt}, ...messages]};
-    extract = (d) => d.choices?.[0]?.message?.content || (() => { throw new Error("回應中沒有文字內容"); })();
+    extract = (d) => {
+      const choice = d.choices?.[0];
+      const t = choice?.message?.content;
+      if(!t) throw new Error("回應中沒有文字內容");
+      return {text: t, truncated: choice?.finish_reason === "length"};
+    };
   } else {
     throw new Error("未知的服務商：" + provider);
   }
@@ -637,8 +717,8 @@ function submitQuestion(){
         round.replies[pid].retryNote = `伺服器忙線中（HTTP ${status}），第 ${attempt} 次重試…`;
         updateReplyCard(round.id, pid);
       }
-    ).then(text => {
-      round.replies[pid] = {status: "done", text};
+    ).then(result => {
+      round.replies[pid] = {status: "done", text: result.text, truncated: result.truncated, continueCount: 0};
       updateReplyCard(round.id, pid);
     }).catch(err => {
       round.replies[pid] = {status: "error", error: err.message || String(err)};
@@ -662,11 +742,50 @@ function retryReply(roundId, personaId){
       round.replies[personaId].retryNote = `伺服器忙線中（HTTP ${status}），第 ${attempt} 次重試…`;
       updateReplyCard(roundId, personaId);
     }
-  ).then(text => {
-    round.replies[personaId] = {status: "done", text};
+  ).then(result => {
+    round.replies[personaId] = {status: "done", text: result.text, truncated: result.truncated, continueCount: 0};
     updateReplyCard(roundId, personaId);
   }).catch(err => {
     round.replies[personaId] = {status: "error", error: err.message || String(err)};
+    updateReplyCard(roundId, personaId);
+  });
+}
+
+function continueReply(roundId, personaId){
+  const round = state.rounds.find(r => r.id === roundId);
+  if(!round) return;
+  const current = round.replies[personaId];
+  if(!current || current.status !== "done") return;
+  const cfg = loadAiConfig();
+  const persona = personaById[personaId];
+
+  const priorText = current.text;
+  const continueCount = (current.continueCount || 0) + 1;
+  const messages = [
+    ...buildMessages(personaId, round),
+    {role: "assistant", content: priorText},
+    {role: "user", content: "你剛才的回答在這裡被截斷了，請直接從斷句處自然接續下去，不要重複前面已經說過的內容，也不要重新寫開場白或前言，直接接續原本沒寫完的段落或句子。"}
+  ];
+
+  round.replies[personaId] = {...current, status: "continuing"};
+  updateReplyCard(roundId, personaId);
+
+  callLLM(
+    cfg.provider, cfg.model, cfg.apiKey, persona.systemPrompt, messages,
+    (attempt, status) => {
+      round.replies[personaId].retryNote = `伺服器忙線中（HTTP ${status}），第 ${attempt} 次重試…`;
+      updateReplyCard(roundId, personaId);
+    }
+  ).then(result => {
+    round.replies[personaId] = {
+      status: "done",
+      text: priorText + result.text,
+      truncated: result.truncated && continueCount < MAX_CONTINUE_ROUNDS,
+      continueCount
+    };
+    updateReplyCard(roundId, personaId);
+  }).catch(err => {
+    round.replies[personaId] = {status: "done", text: priorText, truncated: current.truncated, continueCount: current.continueCount, continueError: err.message || String(err)};
     updateReplyCard(roundId, personaId);
   });
 }
@@ -688,10 +807,20 @@ function replyCardHtml(round, personaId){
     bodyHtml = `<div class="reply-status error">⚠️ 回覆失敗：${esc(r.error)}</div>
       <button class="btn btn-sm" data-retry-round="${esc(round.id)}" data-retry-persona="${esc(personaId)}">重試</button>`;
   }else{
+    // status: done 或 continuing——continuing時仍先顯示目前已生成的文字，底下疊加接續中的狀態列
     bodyHtml = `<div class="reply-body">${esc(r.text)}</div>`;
+    if(r.status === "continuing"){
+      bodyHtml += `<div class="reply-status"><span class="spinner"></span>接續生成中…${r.retryNote ? esc(r.retryNote) : ""}</div>`;
+    }else if(r.truncated){
+      bodyHtml += `<div class="truncated-note">⚡ 回覆可能因長度限制被截斷</div>
+        <button class="btn btn-sm" data-continue-round="${esc(round.id)}" data-continue-persona="${esc(personaId)}">接續完整回覆</button>`;
+    }
+    if(r.continueError){
+      bodyHtml += `<div class="reply-status error">⚠️ 接續失敗：${esc(r.continueError)}</div>`;
+    }
   }
 
-  const quoteNote = (p.quoteTiering && r.status === "done")
+  const quoteNote = (p.quoteTiering && (r.status === "done" || r.status === "continuing"))
     ? `<div class="quote-tier-note">此角色的引語習慣區分「已查證原話」與「廣泛流傳但存疑」，如需精確引用請留意回覆中的標註。</div>` : "";
 
   return `
@@ -707,6 +836,15 @@ function replyCardHtml(round, personaId){
   `;
 }
 
+function bindCardActions(roundId, personaId){
+  const el = document.querySelector(`.reply-card[data-round="${CSS.escape(roundId)}"][data-persona="${CSS.escape(personaId)}"]`);
+  if(!el) return;
+  const retryBtn = el.querySelector("[data-retry-round]");
+  if(retryBtn) retryBtn.addEventListener("click", () => retryReply(roundId, personaId));
+  const continueBtn = el.querySelector("[data-continue-round]");
+  if(continueBtn) continueBtn.addEventListener("click", () => continueReply(roundId, personaId));
+}
+
 function renderRounds(){
   const container = document.getElementById("roundsContainer");
   container.innerHTML = state.rounds.map(round => `
@@ -718,7 +856,11 @@ function renderRounds(){
       </div>
     </div>
   `).join("");
-  bindRetryButtons();
+  for(const round of state.rounds){
+    for(const pid of [...state.selectedIds].filter(id => round.replies[id])){
+      bindCardActions(round.id, pid);
+    }
+  }
 }
 
 function updateReplyCard(roundId, personaId){
@@ -727,14 +869,51 @@ function updateReplyCard(roundId, personaId){
   const el = document.querySelector(`.reply-card[data-round="${CSS.escape(roundId)}"][data-persona="${CSS.escape(personaId)}"]`);
   if(el){
     el.outerHTML = replyCardHtml(round, personaId);
-    bindRetryButtons();
+    bindCardActions(roundId, personaId);
   }
 }
 
-function bindRetryButtons(){
-  document.querySelectorAll("[data-retry-round]").forEach(btn => {
-    btn.addEventListener("click", () => retryReply(btn.dataset.retryRound, btn.dataset.retryPersona));
-  });
+/* ============ 清除 / 下載對話紀錄 ============ */
+
+function clearRounds(){
+  if(state.rounds.length === 0) return;
+  if(!confirm("確定要清除所有對話紀錄嗎？此動作無法復原（若需保留，請先按「下載txt」）。")) return;
+  state.rounds = [];
+  renderRounds();
+  document.getElementById("roundsSection").style.display = "none";
+}
+
+function buildTranscriptText(){
+  const lines = ["AI人物顧問團 · 對話紀錄", "匯出時間：" + fmtTime(new Date()), "=".repeat(40)];
+  for(const round of state.rounds){
+    lines.push("", "【提問】" + round.question, "時間：" + fmtTime(round.timestamp), "-".repeat(40));
+    for(const pid of [...state.selectedIds].filter(id => round.replies[id])){
+      const p = personaById[pid];
+      const r = round.replies[pid];
+      lines.push("", "◆ " + p.name);
+      if(r.status === "done") lines.push(r.text);
+      else if(r.status === "error") lines.push("（回覆失敗：" + r.error + "）");
+      else lines.push("（尚未回覆完成）");
+    }
+    lines.push("", "=".repeat(40));
+  }
+  lines.push("", "本文件由AI人物顧問團網站匯出，所有回覆為AI依公開資料生成的角色扮演框架推斷，不代表對應人物本人真實觀點或授權。");
+  return lines.join("\n");
+}
+
+function downloadTranscript(){
+  if(state.rounds.length === 0) return;
+  const text = buildTranscriptText();
+  const blob = new Blob([text], {type: "text/plain;charset=utf-8"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const ts = new Date().toISOString().replace(/[:T]/g, "-").slice(0, 19);
+  a.href = url;
+  a.download = `AI人物顧問_對話紀錄_${ts}.txt`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
 }
 
 /* ============ 初始化 ============ */
@@ -782,6 +961,9 @@ function init(){
   });
 
   document.getElementById("btnManual").addEventListener("click", () => window.open("manual.html", "_blank"));
+
+  document.getElementById("btnClear").addEventListener("click", clearRounds);
+  document.getElementById("btnDownload").addEventListener("click", downloadTranscript);
 }
 
 document.addEventListener("DOMContentLoaded", init);

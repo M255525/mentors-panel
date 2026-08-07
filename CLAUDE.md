@@ -37,6 +37,28 @@
 - 並行呼叫`selectedIds`時，每個`callLLM()`各自獨立`.then()`更新對應卡片DOM（`updateReplyCard()`用`data-round`+`data-persona`屬性定位），不等全部完成才一起渲染；`error`狀態的「重試」只重打該張卡片，不影響其他已完成的。
 - 免責聲明三層呈現：人物卡上永遠顯示的`disclaimerShort`小字＋首次選取跳出的一次性完整modal（`localStorage` key `mentorsSeenDisclaimers`記錄已看過的角色）＋每則回覆卡片下方也重複`disclaimerShort`。ⓘ圖示可隨時重開完整說明（`mode:"info"`），此模式下不會觸發選取。
 
+## 回覆截斷接續（重要）
+
+`callLLM`的`extract()`會回傳`{text, truncated}`而非純字串——`truncated`依供應商判斷是否因`max_tokens`被腰斬：Claude看`stop_reason==="max_tokens"`、OpenAI/OpenRouter看`choices[0].finish_reason==="length"`、Gemini看`candidates[0].finishReason==="MAX_TOKENS"`。`round.replies[pid]`多存`truncated`與`continueCount`兩個欄位；`truncated===true`時卡片顯示「接續完整回覆」按鈕，觸發`continueReply()`——重用`buildMessages()`組出的歷史，額外附加`{role:"assistant", content: 已生成的部分文字}` + `{role:"user", content: 接續指示}`，把新呼叫回傳的文字直接串接在舊文字後面（不加分隔符，因為要求模型從斷句處自然接續）。`MAX_CONTINUE_ROUNDS`（目前5）只是防呆上限，不是強制值——使用者可以持續點按鈕接續到滿足為止。`MAX_REPLY_TOKENS`（目前2048）調高可降低觸發頻率，但無法完全避免，接續機制才是根本解法。
+
+## 對話操作功能
+
+- **清除對話**（`clearRounds()`）：`confirm()`二次確認後清空`state.rounds`並隱藏`#roundsSection`；只清對話內容，不影響已選人物與API設定。
+- **下載txt**（`downloadTranscript()`）：把`state.rounds`組成純文字逐輪記錄（比照`小工具/SN-maker`、`行銷內容工具/Prompt`的Blob+`<a download>`寫法），檔名帶時間戳記。
+- 兩個按鈕都在`#roundsSection`的`.rounds-header`裡，只有送出過至少一輪對話後才會出現（`roundsSection`預設`display:none`）。
+
+## 共用頂部跑馬燈
+
+比照工作區已推廣到多個專案的共用跑馬燈機制（`shared-widget-rollout` skill的既有做法，Google Sheet + Apps Script當後端，端點`https://script.google.com/macros/s/AKfycbwKX0DNNbY8y4nf90BFTHtxgfqJcHHcZasRrgycl4QAe52_hkjMWSkYk4xOsqU-JPCROw/exec`，全工作區共用同一個端點與Sheet，內容由該Sheet集中管理、跟mentors-panel本身無關）：
+- **direct-call模式**（本站沒有序號登入機制，POST空`serial`只取`marquee`陣列，忽略`valid`/`reason`）。
+- 版面採用`政府補助認證產生器`外的`行銷內容工具/Prompt`那套「fixed-overlay」整合模式（而非`flex-item`模式），因為本站`.topbar`是`position:sticky`而非包在`100vh`flex殼裡：`#marqueeBar`用`position:fixed;z-index:50`（高於`.topbar`的`z-index:40`），`body.has-marquee`把`body`推下30px、把`.topbar`的`top`也推到30px，避免跑馬燈蓋住或被蓋住。
+- `localStorage` key用本專案專屬的`mentorsMarquee`（各專案各自獨立key）。
+- 若這個共用端點未來換掉或Sheet內容調整，**跟mentors-panel程式碼無關**，不需要改本專案的程式；只有端點URL本身失效才需要更新。
+
+## 頁尾與操作手冊的創作者資訊
+
+`index.html`頁尾與`manual.html`都有「製作：Mark Tsai」的署名與信箱連結。`manual.html`的完整「創作者資料」卡片（證照/經歷）內容與`政府補助認證產生器/sbir-generator`、`phoenix-loan-generator`、`icap-generator`三份`manual.html`的同一區塊**逐字相同**，屬於那組「更新一邊要同步其餘各邊」的同步集合（見那三個專案的CLAUDE.md）；mentors-panel是這組同步集合裡目前唯一的**公開GitHub Pages網站**，因此「授權與使用限制」文字刻意改寫過，不是照抄那三個私有教學工具的「禁止公開發布」措辭（因為本站本身就是公開發布的）。
+
 ## 已知限制
 
 選滿7位人物對同一供應商同時發出7個請求，可能撞到該供應商的並發限流；`callLLM`內建的429重試多半能吸收，目前未做請求間隔stagger，若使用者反映經常性失敗可考慮加入150~300ms的請求間隔。
