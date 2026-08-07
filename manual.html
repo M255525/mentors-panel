@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>操作手冊｜AI人物顧問團</title>
+<style>
+  :root{
+    --main:#b8763f; --main-dark:#7a4e28; --bg:#f4f1ec; --card:#ffffff;
+    --border:#e2ddd2; --text:#1f1c18; --muted:#5c564c; --danger:#b3432f; --warnbg:#fdf3d8; --warnink:#7a5b12;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; font-family:"Noto Sans TC","Microsoft JhengHei","PingFang TC",sans-serif;
+    background:var(--bg); color:var(--text); line-height:1.9;
+  }
+  header{ background:linear-gradient(135deg,var(--main-dark),var(--main)); color:#fff; padding:22px 24px; }
+  header h1{font-size:1.3rem; margin:0;}
+  header p{margin:4px 0 0; font-size:.85rem; opacity:.9;}
+  header a{
+    display:inline-block; margin-top:12px; color:#fff; text-decoration:none;
+    background:rgba(255,255,255,.18); padding:7px 16px; border-radius:6px; font-size:.85rem; font-weight:600;
+  }
+  header a:hover{background:rgba(255,255,255,.3);}
+  main{max-width:860px; margin:0 auto; padding:24px 16px 60px;}
+  .card{ background:var(--card); border:1px solid var(--border); border-radius:10px; padding:20px 24px; margin-bottom:18px; }
+  h2{ font-size:1.1rem; color:var(--main-dark); margin:0 0 12px; padding-bottom:8px; border-bottom:2px solid #f0e6d8; }
+  h3{font-size:.95rem; color:var(--main-dark); margin:18px 0 6px;}
+  p{margin:8px 0;}
+  ul,ol{margin:8px 0; padding-left:24px;}
+  li{margin:4px 0;}
+  table{width:100%; border-collapse:collapse; margin:10px 0; font-size:.88rem;}
+  th,td{border:1px solid var(--border); padding:8px 12px; text-align:left; vertical-align:top;}
+  th{background:#f0e6d8; color:var(--main-dark); white-space:nowrap;}
+  .warning{
+    background:#fbe9e4; border:1px solid #e3a795; border-radius:8px;
+    padding:14px 18px; color:#8a3423; font-weight:600; margin-bottom:18px;
+  }
+  .warning small{display:block; font-weight:400; margin-top:6px; color:#9a4530;}
+  .tip{ background:var(--warnbg); border-left:4px solid #d4a017; border-radius:0 8px 8px 0; padding:10px 14px; font-size:.86rem; margin:10px 0; color:var(--warnink); }
+  .badge{ display:inline-block; background:#f0e6d8; color:var(--main-dark); border-radius:999px; padding:2px 12px; font-size:.78rem; font-weight:600; margin-right:6px; }
+  code{background:#f0ece3; padding:1px 6px; border-radius:4px; font-size:.88em;}
+  footer{text-align:center; padding:18px; font-size:.78rem; color:var(--muted); line-height:1.8;}
+  footer a{color:var(--main);}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>操作手冊</h1>
+  <p>AI人物顧問團 · 多位人物思維顧問對話網站</p>
+  <a href="index.html">← 回到顧問團</a>
+</header>
+
+<main>
+
+<div class="warning">
+  ⚠ 本站所有回覆皆為AI依據公開資料整理出的角色扮演框架推斷，僅供啟發與練習用途參考，不代表人物本人真實觀點、立場或授權。
+  <small>回覆內容不應作為法律、財務、醫療或其他專業領域的正式建議依據；涉及已故人物的角色僅能反映其生前公開言論，無法回應其身後的事件與科技發展。</small>
+</div>
+
+<div class="card">
+  <h2>這是什麼網站？</h2>
+  <p>一個單檔、免安裝的網頁工具：你可以從7位公眾人物中選擇一位或多位「思維顧問」，針對人生規劃、工作任務、工作計畫等問題提問，被選中的角色會各自以其思維框架獨立回覆，並列呈現方便你比較不同視角。</p>
+  <p>用瀏覽器打開 <code>index.html</code> 即可使用，不需要架伺服器、不需要安裝任何軟體，桌機/平板/手機都能開啟。</p>
+</div>
+
+<div class="card">
+  <h2>怎麼開始使用</h2>
+  <ol>
+    <li>準備一把你自己的LLM API金鑰（Claude、OpenAI、Gemini、OpenRouter 任選一家，擇一即可）。</li>
+    <li>點右上角「⚙ API 設定」，選服務商、貼上金鑰、按儲存。</li>
+    <li>在「選擇顧問」區勾選一位或多位人物——第一次選某位角色時，會先彈出一次性的完整說明，請詳讀後按「我瞭解了」。</li>
+    <li>在輸入框打字提問（或點下方「人生規劃／工作任務／工作計畫」快速範例填入），按「送出問題」。</li>
+    <li>被選中的每一位角色會各自獨立生成回覆，並列顯示成卡片；同一位角色的多輪對話會記得自己之前說過什麼，但看不到其他角色的回覆。</li>
+  </ol>
+  <div class="tip">💡 卡片上ⓘ圖示可以隨時重新查看該角色的完整說明與免責聲明，不限第一次選取時。</div>
+</div>
+
+<div class="card">
+  <h2>API 金鑰去哪裡拿？會不會外洩？</h2>
+  <p>四家服務商任選一家申請即可（各家都有免費額度或需自行儲值，費用由你直接支付給該服務商，本站不經手）：</p>
+  <ul>
+    <li>Claude（Anthropic）：<code>console.anthropic.com</code></li>
+    <li>OpenAI：<code>platform.openai.com</code></li>
+    <li>Gemini（Google AI Studio）：<code>aistudio.google.com</code></li>
+    <li>OpenRouter：<code>openrouter.ai</code>（可用單一金鑰呼叫多家模型）</li>
+  </ul>
+  <p><strong>金鑰只會存在你目前使用的這個瀏覽器（localStorage）</strong>，網頁程式碼會直接從你的瀏覽器連到該服務商的官方伺服器，不會經過本站或任何第三方伺服器中繼，本站開發者也無法看到或取得你的金鑰。換瀏覽器、換裝置或清除瀏覽資料後，需要重新輸入一次金鑰。請避免在公用電腦上填寫金鑰。</p>
+</div>
+
+<div class="card">
+  <h2>7位顧問是誰？</h2>
+  <table>
+    <tr><th>人物</th><th>一句話定位</th><th>特別留意</th></tr>
+    <tr><td>黃仁勳</td><td>輝達創辦人暨執行長：忍痛換護城河的長期主義者</td><td>—</td></tr>
+    <tr><td>郭台銘</td><td>鴻海精密創辦人：強勢談判與組織紀律的實踐者</td><td>不適合用於嚴謹史實查核或涉及本人真實隱私立場推測的場合</td></tr>
+    <tr><td>周杰倫</td><td>創作歌手、音樂人、導演：原創性與跨界混搭的判斷框架</td><td>—</td></tr>
+    <tr><td>賈伯斯</td><td>蘋果共同創辦人：產品與設計決策的簡潔尖銳視角</td><td>已故（2011年），無法回應之後的事件與科技</td></tr>
+    <tr><td>菲利浦．科特勒</td><td>現代行銷學之父：品牌定位與顧客價值主張的分析框架</td><td>—</td></tr>
+    <tr><td>可可．香奈兒</td><td>Chanel創辦人：讓身體更自由的設計判斷與敘事主導權</td><td>已故（1971年），且多句網路流傳語錄查無實證出處</td></tr>
+    <tr><td>安德烈．卡帕西</td><td>AI研究者、前特斯拉AI總監：技術現況判讀與自主權評估框架</td><td>—</td></tr>
+  </table>
+  <p>每位角色的思維框架都是根據約13~19個公開演講、訪談、著作與媒體報導整理而成，並非本人審閱或授權。</p>
+</div>
+
+<div class="card">
+  <h2>常見問題</h2>
+  <h3>為什麼送出問題後沒有反應？</h3>
+  <p>檢查是否已經在「⚙ API 設定」填入金鑰；也可能是金鑰無效或額度不足，回覆卡片會顯示錯誤訊息與「重試」按鈕。</p>
+  <h3>一次選很多位顧問會比較貴嗎？</h3>
+  <p>會——每多選一位，就會多打一次API請求，費用依你選用的服務商計費規則而定，與本站無關。建議先選2~3位測試。</p>
+  <h3>可以問任何問題嗎？</h3>
+  <p>可以，但每位角色都有各自的「誠實邊界」——遇到本人從未公開表態過的領域，角色會標註「這是框架推斷，非本人真實立場」而非憑空捏造答案。</p>
+</div>
+
+</main>
+
+<footer>
+  AI人物顧問團 · 本站程式碼與人物思維框架整理皆由AI輔助生成，僅供啟發與練習用途，不代表任何人物本人的真實觀點。
+  <br><a href="index.html">回到顧問團</a>
+</footer>
+
+</body>
+</html>
