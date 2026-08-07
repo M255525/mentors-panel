@@ -47,6 +47,10 @@
 - **下載txt**（`downloadTranscript()`）：把`state.rounds`組成純文字逐輪記錄（比照`小工具/SN-maker`、`行銷內容工具/Prompt`的Blob+`<a download>`寫法），檔名帶時間戳記。
 - 兩個按鈕都在`#roundsSection`的`.rounds-header`裡，只有送出過至少一輪對話後才會出現（`roundsSection`預設`display:none`）。
 
+## 瀏覽次數計數器
+
+`#visitCounter`（頁尾）用免費第三方服務 [CounterAPI](https://counterapi.dev)（`api.counterapi.dev/v1/mentors-panel/pageviews/up`）記錄**累計頁面載入次數**，不是去重後的訪客數。純展示用途、無認證、匿名可寫，理論上任何人都能對這個公開的counter端點灌水，可接受風險（純虛榮數字，非安全或計費用途）。選這個而非工作區慣用的Google Apps Script後端，是因為需求極簡（只要一個會累加的數字），另起一個Sheet+Script部署的維運成本不划算；若之後這個免費服務停用或不穩定，換成別的counter API或自建都只需要改`COUNTER_URL`這一行。有`localStorage`（key `mentorsVisitCount`）快取上次讀到的數字，網路請求失敗時靜默顯示快取值或留空，不會拋錯影響頁面其他功能。
+
 ## 共用頂部跑馬燈
 
 比照工作區已推廣到多個專案的共用跑馬燈機制（`shared-widget-rollout` skill的既有做法，Google Sheet + Apps Script當後端，端點`https://script.google.com/macros/s/AKfycbwKX0DNNbY8y4nf90BFTHtxgfqJcHHcZasRrgycl4QAe52_hkjMWSkYk4xOsqU-JPCROw/exec`，全工作區共用同一個端點與Sheet，內容由該Sheet集中管理、跟mentors-panel本身無關）：

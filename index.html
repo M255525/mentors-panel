@@ -196,6 +196,7 @@
 
   footer.site-footer{max-width:1180px; margin:60px auto 0; padding:20px; text-align:center; font-size:.74rem; color:var(--ink-faint);}
   footer.site-footer a{color:var(--ink-soft);}
+  .visit-counter{margin-top:8px; font-size:.68rem; color:var(--ink-faint); min-height:1em;}
 
   @media (max-width:1023px){
     .replies-grid{grid-template-columns:repeat(2,1fr);}
@@ -311,6 +312,7 @@
   API金鑰僅存於您瀏覽器的localStorage，網站本身不會、也無法取得您的金鑰。
   <br>
   製作：Mark Tsai｜<a href="mailto:tsaimark@gmail.com">tsaimark@gmail.com</a>｜<a href="manual.html">操作手冊</a>
+  <div id="visitCounter" class="visit-counter"></div>
 </footer>
 
 <!-- 免責聲明 / 特殊警語 modal -->
@@ -967,6 +969,35 @@ function init(){
 }
 
 document.addEventListener("DOMContentLoaded", init);
+</script>
+
+<script>
+(function () {
+  "use strict";
+  // 免費的 CounterAPI 匿名計數器，每次頁面載入呼叫一次 /up 累加並取得目前總數。
+  // 純展示用途、非精確訪客統計；服務若無法連線就靜默失敗，不影響網站其他功能。
+  var COUNTER_URL = "https://api.counterapi.dev/v1/mentors-panel/pageviews/up";
+  var CACHE_KEY = "mentorsVisitCount";
+  var el = document.getElementById("visitCounter");
+  if (!el) return;
+
+  function render(n) {
+    el.textContent = "本站累計瀏覽次數：" + Number(n).toLocaleString("zh-TW");
+  }
+
+  var cached = localStorage.getItem(CACHE_KEY);
+  if (cached) render(cached);
+
+  fetch(COUNTER_URL)
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      if (data && typeof data.count === "number") {
+        localStorage.setItem(CACHE_KEY, String(data.count));
+        render(data.count);
+      }
+    })
+    .catch(function () {});
+})();
 </script>
 </body>
 </html>
