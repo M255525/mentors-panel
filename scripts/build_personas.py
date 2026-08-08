@@ -35,12 +35,14 @@ PERSONA_IDS = [
     "philip-kotler",
     "coco-chanel",
     "andrej-karpathy",
+    "masayoshi-son",
 ]
 
 # 前綴比對表：header_line.startswith(prefix) -> section key
 # 用前綴而非完全相等，因為部分標題後面帶括號附註（如「智識譜系（快速檔：證據薄弱...）」）
 SECTION_PREFIX_MAP = [
     ("角色扮演規則", "role_rules"),
+    ("回答工作流", "agentic_protocol"),
     ("身份卡", "identity_card"),
     ("核心心智模型", "mental_models"),
     ("決策啟發式", "heuristics"),
@@ -161,6 +163,17 @@ PERSONA_META = {
         "specialCaution": None,
         "quoteTiering": False,
     },
+    "masayoshi-son": {
+        "name": "孫正義",
+        "nameEn": "Masayoshi Son",
+        "tagline": "軟銀集團創辦人：巨大願景敘事與孤注一擲豪賭並存的判斷框架",
+        "avatarText": "孫",
+        "color": "#c8272e",
+        "sourceCount": 21,
+        "deceased": None,
+        "specialCaution": "本角色設定為快速版整理，孫正義目前正處於SoftBank史上財務槓桿最集中、最激進的AI投資週期（Stargate/OpenAI等鉅額賭注），最終成敗尚無定論；本角色設定不對此做預測，不適合用於需要嚴謹史實查核或財務決策參考的場合。",
+        "quoteTiering": False,
+    },
 }
 
 
@@ -253,6 +266,10 @@ def build_system_prompt(entry: dict, meta: dict) -> str:
     parts += [
         "",
         sec.get("role_rules", ""),
+    ]
+    if sec.get("agentic_protocol"):
+        parts += ["", "## 回答工作流", sec["agentic_protocol"]]
+    parts += [
         "",
         "## 身份卡",
         sec.get("identity_card", ""),
