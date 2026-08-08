@@ -974,9 +974,12 @@ document.addEventListener("DOMContentLoaded", init);
 <script>
 (function () {
   "use strict";
-  // 免費的 CounterAPI 匿名計數器，每次頁面載入呼叫一次 /up 累加並取得目前總數。
+  // 免費的 CountAPI 匿名計數器（countapi.mileshilliard.com，無需註冊/金鑰），每次頁面載入呼叫一次 hit 端點累加並取得目前總數。
   // 純展示用途、非精確訪客統計；服務若無法連線就靜默失敗，不影響網站其他功能。
-  var COUNTER_URL = "https://api.counterapi.dev/v1/mentors-panel/pageviews/up";
+  // 2026-08-08：原本用的 CounterAPI（api.counterapi.dev/v1）已停用（回傳410 Gone，v2改為需要帳號+API金鑰），
+  // 舊資料無法讀回、無從延續，改用另一個目前還活著的免費服務、計數從0重新開始，見 food-finder/CLAUDE.md「瀏覽次數計數器」一節的troubleshooting過程。
+  // 注意：這是公開共用的 key 命名空間，key 需夠獨特避免撞到其他使用者的計數器，不要改成通用字串（例如單純 "visits"）。
+  var COUNTER_URL = "https://countapi.mileshilliard.com/api/v1/hit/mentorspanel_tsaimark_visits";
   var CACHE_KEY = "mentorsVisitCount";
   var el = document.getElementById("visitCounter");
   if (!el) return;
@@ -991,9 +994,9 @@ document.addEventListener("DOMContentLoaded", init);
   fetch(COUNTER_URL)
     .then(function (r) { return r.json(); })
     .then(function (data) {
-      if (data && typeof data.count === "number") {
-        localStorage.setItem(CACHE_KEY, String(data.count));
-        render(data.count);
+      if (data && typeof data.value === "number") {
+        localStorage.setItem(CACHE_KEY, String(data.value));
+        render(data.value);
       }
     })
     .catch(function () {});
