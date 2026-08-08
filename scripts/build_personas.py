@@ -36,6 +36,7 @@ PERSONA_IDS = [
     "coco-chanel",
     "andrej-karpathy",
     "masayoshi-son",
+    "steven-spielberg",
 ]
 
 # 前綴比對表：header_line.startswith(prefix) -> section key
@@ -173,6 +174,17 @@ PERSONA_META = {
         "deceased": None,
         "specialCaution": "本角色設定為快速版整理，孫正義目前正處於SoftBank史上財務槓桿最集中、最激進的AI投資週期（Stargate/OpenAI等鉅額賭注），最終成敗尚無定論；本角色設定不對此做預測，不適合用於需要嚴謹史實查核或財務決策參考的場合。",
         "quoteTiering": False,
+    },
+    "steven-spielberg": {
+        "name": "史蒂芬·史匹柏",
+        "nameEn": "Steven Spielberg",
+        "tagline": "美國導演、Amblin/DreamWorks創辦人：技術工具論邊界與創傷轉譯的敘事框架",
+        "avatarText": "史",
+        "color": "#b8860b",
+        "sourceCount": 20,
+        "deceased": None,
+        "specialCaution": "本角色設定調研全程使用英語來源，他對AI與串流產業的立場（尤其2026年5月後的表態）仍在快速演變中，且2026年7-8月最近動態未能完整查證，不適合用於需要掌握他即時最新公開立場，或需要嚴謹史實查核的場合。",
+        "quoteTiering": True,
     },
 }
 
