@@ -1,6 +1,6 @@
 # CLAUDE.md — mentors-panel
 
-單檔前端網站：使用者可勾選 `nuwa-skill` 蒸餾出的9位人物視角思維顧問（黃仁勳、郭台銘、周杰倫、賈伯斯、科特勒、香奈兒、卡帕西、孫正義、史蒂芬·史匹柏），針對人生規劃/工作任務/工作計畫等問題提問，被選中的角色各自以其思維框架獨立回覆、並列呈現。無建置步驟、無框架，直接開啟 `index.html`（`file://`）或以靜態伺服器託管即可，響應式支援桌機/平板/手機。
+單檔前端網站：使用者可勾選 `nuwa-skill` 蒸餾出的10位人物視角思維顧問（黃仁勳、郭台銘、周杰倫、賈伯斯、科特勒、香奈兒、卡帕西、孫正義、史蒂芬·史匹柏、戴爾·卡內基），針對人生規劃/工作任務/工作計畫等問題提問，被選中的角色各自以其思維框架獨立回覆、並列呈現。無建置步驟、無框架，直接開啟 `index.html`（`file://`）或以靜態伺服器託管即可，響應式支援桌機/平板/手機。
 
 ## 架構
 
@@ -23,7 +23,7 @@
 1. **`extract_sections()`**：讀取 `~/.claude/skills/<id>-perspective/SKILL.md`，去YAML frontmatter、用固定字串切除檔尾「本Skill由女媧・Skill造人術生成」版權區塊、按9個固定H2標題前綴（角色扮演規則/身份卡/核心心智模型/決策啟發式/表達DNA/人物時間線或關鍵節點/價值觀與反模式/智識譜系/誠實邊界）分類切段，捨棄「附錄：調研來源」整節。對誠實邊界等段落做**片語級**黑話替換（`快速檔`→`快速版`、`蒸餾`→`整理`等，見`JARGON_REPLACEMENTS`），轉換完做黑名單關鍵字掃描（`女媧`/`花叔`/`蒸餾`/`Quick Tier`等殘留就`raise`中止）。輸出 `data/personas-source.json`。
 2. **`build_persona_object()`**：套用腳本內人工維護的`PERSONA_META`常數（tagline/頭像縮寫/代表色/已故人物注記/特殊警語/語錄雙軌標註旗標），組裝`systemPrompt`與`disclaimerShort`/`disclaimerFull`，輸出 `personas-data.js`。
 
-**執行時機**：只在既有人物的SKILL.md被`nuwa-skill`重新蒸餾更新後才需要重跑 `python scripts/build_personas.py`；重跑後請 diff `data/personas-source.json` 與 `personas-data.js`，確認沒有覆蓋掉已經人工微調過的內容（例如`PERSONA_META`裡手調的措辭）才commit。若未來要新增第10位人物，記得同步在`PERSONA_IDS`與`PERSONA_META`各加一筆（2026-08-08新增第9位史蒂芬·史匹柏時的做法可參考：先用`nuwa-skill`蒸餾出`~/.claude/skills/steven-spielberg-perspective/`，再補`PERSONA_IDS`與`PERSONA_META`兩筆，跑腳本即完成，網站前端因完全data-driven不需改`index.html`）。
+**執行時機**：只在既有人物的SKILL.md被`nuwa-skill`重新蒸餾更新後才需要重跑 `python scripts/build_personas.py`；重跑後請 diff `data/personas-source.json` 與 `personas-data.js`，確認沒有覆蓋掉已經人工微調過的內容（例如`PERSONA_META`裡手調的措辭）才commit。若未來要新增第11位人物，記得同步在`PERSONA_IDS`與`PERSONA_META`各加一筆（2026-08-08新增第9位史蒂芬·史匹柏、第10位戴爾·卡內基時的做法可參考：先用`nuwa-skill`蒸餾出`~/.claude/skills/<person-id>-perspective/`，再補`PERSONA_IDS`與`PERSONA_META`兩筆，跑腳本即完成，網站前端因完全data-driven不需改`index.html`）。**卡內基那次的重要改進**：新SKILL.md撰寫階段就直接把「若當前環境無工具存取權限（mentors-panel純前端無function-calling）」的處理寫進Agentic Protocol，不必等到Phase 5才被抓到——這是從史匹柏那次的教訓中學到、日後應該視為標準做法。
 
 **`SECTION_PREFIX_MAP`踩坑**：2026-08-08升級7位人物SKILL.md新增「回答工作流（Agentic Protocol）」章節時，一度忘記同步這張對照表，導致該章節被`extract_sections()`當成「未歸類章節」靜默捨棄、完全沒進到`systemPrompt`——8位人物裡有7位的「先查證再回答」指示因此在網站上實際失效過一段時間（腳本仍執行成功、無報錯，只在stdout印警告，非常容易被忽略）。日後SKILL.md模板若新增章節（不只是這次的Agentic Protocol），務必同步檢查`SECTION_PREFIX_MAP`與`build_system_prompt()`，並留意執行`build_personas.py`時的`[警告] 未歸類的章節標題`輸出。
 
@@ -32,6 +32,7 @@
 - 香奈兒的`quoteTiering=True`會額外附加一句要求LLM延續「已查證原話 vs 廣泛流傳但存疑」雙軌標註的指示（她的SKILL.md本身就有這個機制，語錄真偽考據過，很多網傳「香奈兒名言」其實查無實證）。
 - 郭台銘的`specialCaution`會顯示在人物卡的ⓘ說明與首次選取的modal裡，警語原文取自其SKILL.md的誠實邊界章節。
 - 史蒂芬·史匹柏同時有`quoteTiering=True`（其SKILL.md表達DNA調研有做語錄真偽查證，網傳「史匹柏名言」多查無實據）與`specialCaution`（提醒其AI/串流產業立場仍在快速演變、且調研全程僅用英語來源）。
+- 戴爾·卡內基（1888-1955）同時有`deceased`、`quoteTiering=True`與`specialCaution`三者並用：他過世早於播客/訪談時代，「對話」調研維度資訊確實稀薄（SKILL.md誠實標註）；`specialCaution`警語提醒他的核心原則（「讓對方覺得是他自己的主意」）曾被查爾斯·曼森用於操縱信眾犯下謀殺案，回覆時會誠實揭露此侷限而非美化成萬用技巧；改姓年份、初婚年份等多個生平細節在史料間本身有出入，未強行統一。
 
 ## 前端行為重點
 
@@ -68,7 +69,7 @@
 
 ## 已知限制
 
-選滿9位人物對同一供應商同時發出9個請求，可能撞到該供應商的並發限流；`callLLM`內建的429重試多半能吸收，目前未做請求間隔stagger，若使用者反映經常性失敗可考慮加入150~300ms的請求間隔。
+選滿10位人物對同一供應商同時發出10個請求，可能撞到該供應商的並發限流；`callLLM`內建的429重試多半能吸收，目前未做請求間隔stagger，若使用者反映經常性失敗可考慮加入150~300ms的請求間隔。
 
 ## 指令
 

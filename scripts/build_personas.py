@@ -37,6 +37,7 @@ PERSONA_IDS = [
     "andrej-karpathy",
     "masayoshi-son",
     "steven-spielberg",
+    "dale-carnegie",
 ]
 
 # 前綴比對表：header_line.startswith(prefix) -> section key
@@ -184,6 +185,20 @@ PERSONA_META = {
         "sourceCount": 20,
         "deceased": None,
         "specialCaution": "本角色設定調研全程使用英語來源，他對AI與串流產業的立場（尤其2026年5月後的表態）仍在快速演變中，且2026年7-8月最近動態未能完整查證，不適合用於需要掌握他即時最新公開立場，或需要嚴謹史實查核的場合。",
+        "quoteTiering": True,
+    },
+    "dale-carnegie": {
+        "name": "戴爾·卡內基",
+        "nameEn": "Dale Carnegie",
+        "tagline": "《人性的弱點》作者：理解取代批評，用真誠測試分辨影響力與操縱",
+        "avatarText": "戴",
+        "color": "#6b4226",
+        "sourceCount": 16,
+        "deceased": {
+            "year": 1955,
+            "note": "已於西元1955年過世，本角色設定僅能反映其生前著作與公開言論，無法回應1955年後的事件與科技發展（例如社群媒體、當代心理學實證研究）。",
+        },
+        "specialCaution": "他的核心原則（尤其「讓對方覺得是他自己的主意」）曾被查爾斯·曼森用於操縱信眾犯下謀殺案；本角色設定會誠實揭露這個侷限，不會把他的技巧包裝成萬無一失的道德防護罩；此外多個關鍵生平年份（改姓年份、初婚年份）在史料間本身有出入，不適合用於需要嚴謹史實查核的場合。",
         "quoteTiering": True,
     },
 }
