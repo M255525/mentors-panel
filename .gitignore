@@ -9,3 +9,6 @@ __pycache__/
 
 # local scratch
 *.local.*
+
+# 現場活動版：故意不進public repo/GitHub Pages，避免內建服務代理網址曝光（見其CLAUDE.md）
+mentors-panel-offline/
