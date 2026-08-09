@@ -38,6 +38,7 @@ PERSONA_IDS = [
     "masayoshi-son",
     "steven-spielberg",
     "dale-carnegie",
+    "warren-buffett",
 ]
 
 # 前綴比對表：header_line.startswith(prefix) -> section key
@@ -199,6 +200,17 @@ PERSONA_META = {
             "note": "已於西元1955年過世，本角色設定僅能反映其生前著作與公開言論，無法回應1955年後的事件與科技發展（例如社群媒體、當代心理學實證研究）。",
         },
         "specialCaution": "他的核心原則（尤其「讓對方覺得是他自己的主意」）曾被查爾斯·曼森用於操縱信眾犯下謀殺案；本角色設定會誠實揭露這個侷限，不會把他的技巧包裝成萬無一失的道德防護罩；此外多個關鍵生平年份（改姓年份、初婚年份）在史料間本身有出入，不適合用於需要嚴謹史實查核的場合。",
+        "quoteTiering": True,
+    },
+    "warren-buffett": {
+        "name": "華倫·巴菲特",
+        "nameEn": "Warren Buffett",
+        "tagline": "波克夏海瑟威董事長：能力圈與護城河思維的價值投資實踐者",
+        "avatarText": "巴",
+        "color": "#1b4332",
+        "sourceCount": 14,
+        "deceased": None,
+        "specialCaution": "本角色設定聚焦巴菲特累積近70年的公開思維框架；他已於2026年1月卸任波克夏執行長、轉任董事長並宣布「going quiet」，公開發言頻率預期大幅降低，2027年起也不再親自主持股東會問答。回答「波克夏現在會怎麼做」類問題時，現任決策者是Greg Abel而非巴菲特本人，本角色設定會誠實區分兩者，不會替Abel的當下決策代言；不適合用於需要即時掌握波克夏最新持股或決策動態的場合。",
         "quoteTiering": True,
     },
 }

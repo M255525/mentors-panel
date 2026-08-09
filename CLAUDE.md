@@ -1,6 +1,6 @@
 # CLAUDE.md — mentors-panel
 
-單檔前端網站：使用者可勾選 `nuwa-skill` 蒸餾出的10位人物視角思維顧問（黃仁勳、郭台銘、周杰倫、賈伯斯、科特勒、香奈兒、卡帕西、孫正義、史蒂芬·史匹柏、戴爾·卡內基），針對人生規劃/工作任務/工作計畫等問題提問，被選中的角色各自以其思維框架獨立回覆、並列呈現。無建置步驟、無框架，直接開啟 `index.html`（`file://`）或以靜態伺服器託管即可，響應式支援桌機/平板/手機。
+單檔前端網站：使用者可勾選 `nuwa-skill` 蒸餾出的11位人物視角思維顧問（黃仁勳、郭台銘、周杰倫、賈伯斯、科特勒、香奈兒、卡帕西、孫正義、史蒂芬·史匹柏、戴爾·卡內基、華倫·巴菲特），針對人生規劃/工作任務/工作計畫等問題提問，被選中的角色各自以其思維框架獨立回覆、並列呈現。無建置步驟、無框架，直接開啟 `index.html`（`file://`）或以靜態伺服器託管即可，響應式支援桌機/平板/手機。
 
 ## 架構
 
@@ -23,7 +23,7 @@
 1. **`extract_sections()`**：讀取 `~/.claude/skills/<id>-perspective/SKILL.md`，去YAML frontmatter、用固定字串切除檔尾「本Skill由女媧・Skill造人術生成」版權區塊、按9個固定H2標題前綴（角色扮演規則/身份卡/核心心智模型/決策啟發式/表達DNA/人物時間線或關鍵節點/價值觀與反模式/智識譜系/誠實邊界）分類切段，捨棄「附錄：調研來源」整節。對誠實邊界等段落做**片語級**黑話替換（`快速檔`→`快速版`、`蒸餾`→`整理`等，見`JARGON_REPLACEMENTS`），轉換完做黑名單關鍵字掃描（`女媧`/`花叔`/`蒸餾`/`Quick Tier`等殘留就`raise`中止）。輸出 `data/personas-source.json`。
 2. **`build_persona_object()`**：套用腳本內人工維護的`PERSONA_META`常數（tagline/頭像縮寫/代表色/已故人物注記/特殊警語/語錄雙軌標註旗標），組裝`systemPrompt`與`disclaimerShort`/`disclaimerFull`，輸出 `personas-data.js`。
 
-**執行時機**：只在既有人物的SKILL.md被`nuwa-skill`重新蒸餾更新後才需要重跑 `python scripts/build_personas.py`；重跑後請 diff `data/personas-source.json` 與 `personas-data.js`，確認沒有覆蓋掉已經人工微調過的內容（例如`PERSONA_META`裡手調的措辭）才commit。若未來要新增第11位人物，記得同步在`PERSONA_IDS`與`PERSONA_META`各加一筆（2026-08-08新增第9位史蒂芬·史匹柏、第10位戴爾·卡內基時的做法可參考：先用`nuwa-skill`蒸餾出`~/.claude/skills/<person-id>-perspective/`，再補`PERSONA_IDS`與`PERSONA_META`兩筆，跑腳本即完成，網站前端因完全data-driven不需改`index.html`）。**卡內基那次的重要改進**：新SKILL.md撰寫階段就直接把「若當前環境無工具存取權限（mentors-panel純前端無function-calling）」的處理寫進Agentic Protocol，不必等到Phase 5才被抓到——這是從史匹柏那次的教訓中學到、日後應該視為標準做法。
+**執行時機**：只在既有人物的SKILL.md被`nuwa-skill`重新蒸餾更新後才需要重跑 `python scripts/build_personas.py`；重跑後請 diff `data/personas-source.json` 與 `personas-data.js`，確認沒有覆蓋掉已經人工微調過的內容（例如`PERSONA_META`裡手調的措辭）才commit。若未來要新增第12位人物，記得同步在`PERSONA_IDS`與`PERSONA_META`各加一筆（2026-08-09新增第11位華倫·巴菲特的做法可參考：先用`nuwa-skill`蒸餾出`~/.claude/skills/<person-id>-perspective/`，再補`PERSONA_IDS`與`PERSONA_META`兩筆，跑腳本即完成，網站前端因完全data-driven不需改`index.html`；記得同步更新`README.md`與`manual.html`裡手打的人數/人物表格，這兩處不是data-driven）。**卡內基那次的重要改進沒有自動延續**：2026-08-08新增卡內基時曾把「若當前環境無工具存取權限」的處理直接寫進Phase 3初版；但2026-08-09蒸餾巴菲特時這個做法沒被自動記住，Phase 3初版又漏寫了同一件事，直到Phase 5雙agent精煉才補回來——顯示這個做法目前只存在個別SKILL.md裡、沒有寫回`nuwa-skill`本身的模板，日後每次新蒸餾人物都可能重蹈覆轍，若要根治應該考慮把這條規則加進`nuwa-skill`的`references/skill-template.md`或Phase 3指引本身。
 
 **`SECTION_PREFIX_MAP`踩坑**：2026-08-08升級7位人物SKILL.md新增「回答工作流（Agentic Protocol）」章節時，一度忘記同步這張對照表，導致該章節被`extract_sections()`當成「未歸類章節」靜默捨棄、完全沒進到`systemPrompt`——8位人物裡有7位的「先查證再回答」指示因此在網站上實際失效過一段時間（腳本仍執行成功、無報錯，只在stdout印警告，非常容易被忽略）。日後SKILL.md模板若新增章節（不只是這次的Agentic Protocol），務必同步檢查`SECTION_PREFIX_MAP`與`build_system_prompt()`，並留意執行`build_personas.py`時的`[警告] 未歸類的章節標題`輸出。
 
