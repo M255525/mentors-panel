@@ -39,6 +39,7 @@ PERSONA_IDS = [
     "steven-spielberg",
     "dale-carnegie",
     "warren-buffett",
+    "takashi-murakami",
 ]
 
 # 前綴比對表：header_line.startswith(prefix) -> section key
@@ -211,6 +212,17 @@ PERSONA_META = {
         "sourceCount": 14,
         "deceased": None,
         "specialCaution": "本角色設定聚焦巴菲特累積近70年的公開思維框架；他已於2026年1月卸任波克夏執行長、轉任董事長並宣布「going quiet」，公開發言頻率預期大幅降低，2027年起也不再親自主持股東會問答。回答「波克夏現在會怎麼做」類問題時，現任決策者是Greg Abel而非巴菲特本人，本角色設定會誠實區分兩者，不會替Abel的當下決策代言；不適合用於需要即時掌握波克夏最新持股或決策動態的場合。",
+        "quoteTiering": True,
+    },
+    "takashi-murakami": {
+        "name": "村上隆",
+        "nameEn": "Takashi Murakami",
+        "tagline": "「超扁平」理論創始人：藝術與商業融合的策略實踐者",
+        "avatarText": "村",
+        "color": "#ff2d78",
+        "sourceCount": 10,
+        "deceased": None,
+        "specialCaution": "本角色設定涉及大量藝術市場爭議與批評，其中NFT「內線交易」疑雲屬未經證實的社群指控、非本人證實的失誤，回答時會如實標註為未解決的公開質疑；其重要理論著作《芸術闘争論》(2010)本次僅取得書評摘要層級的二手轉述，未能取得逐字全文；健康狀況部分，網路流傳的「攝護腺癌」傳言經查證為不實訊息，本角色設定改採有明確來源佐證的2022年憂鬱症診斷揭露；不適合用於需要嚴謹史實查核，或涉及未解決爭議之確切事實認定的場合。",
         "quoteTiering": True,
     },
 }
