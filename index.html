@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AI人物顧問團 · 多位人物思維顧問</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#b8763f">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
 <style>
   :root{
     --bg: #f4f1ec;
@@ -268,6 +271,7 @@
       <div class="brand-title">AI人物顧問團</div>
       <div class="brand-sub">選幾位思維顧問，聊聊你的人生規劃、工作任務或工作計畫</div>
     </div>
+    <button class="btn" id="installBtn" type="button">📲 加入主畫面</button>
     <button class="btn" id="btnManual" type="button">操作手冊</button>
     <button class="btn" id="btnApiSettings" type="button">⚙ API 設定</button>
   </div>
@@ -1000,6 +1004,41 @@ document.addEventListener("DOMContentLoaded", init);
       }
     })
     .catch(function () {});
+})();
+</script>
+<script>
+/* PWA 加入主畫面 — 獨立運作，跟上面主程式邏輯無關 */
+(function () {
+  "use strict";
+  var deferredPrompt = null;
+  var btn = document.getElementById("installBtn");
+
+  window.addEventListener("beforeinstallprompt", function (e) {
+    e.preventDefault();
+    deferredPrompt = e;
+  });
+  window.addEventListener("appinstalled", function () {
+    deferredPrompt = null;
+  });
+
+  if (btn) {
+    var originalLabel = btn.textContent;
+    btn.addEventListener("click", function () {
+      if (!deferredPrompt) {
+        btn.textContent = "瀏覽器不支援，或已安裝過";
+        setTimeout(function () { btn.textContent = originalLabel; }, 2500);
+        return;
+      }
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then(function () { deferredPrompt = null; });
+    });
+  }
+
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", function () {
+      navigator.serviceWorker.register("service-worker.js").catch(function () {});
+    });
+  }
 })();
 </script>
 </body>

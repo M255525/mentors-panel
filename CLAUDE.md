@@ -67,6 +67,10 @@
 
 `index.html`頁尾與`manual.html`都有「製作：Mark Tsai」的署名與信箱連結。`manual.html`的完整「創作者資料」卡片（證照/經歷）內容與`政府補助認證產生器/sbir-generator`、`phoenix-loan-generator`、`icap-generator`三份`manual.html`的同一區塊**逐字相同**，屬於那組「更新一邊要同步其餘各邊」的同步集合（見那三個專案的CLAUDE.md）；mentors-panel是這組同步集合裡目前唯一的**公開GitHub Pages網站**，因此「授權與使用限制」文字刻意改寫過，不是照抄那三個私有教學工具的「禁止公開發布」措辭（因為本站本身就是公開發布的）。
 
+## 加入主畫面（PWA，2026-08-14 新增）
+
+比照工作區 `expense-tracker-pwa` 的做法：`manifest.json`＋`icons/`（米色 `#f4f1ec` 背景、棕金 `#b8763f`「思」字圖示）＋`service-worker.js`（network-first＋同源快取備援，不需要每次改動升版 `CACHE_NAME`）。**安裝腳本刻意放在檔案最尾端**（`visitCounter` IIFE 之後、`</body>` 前），不是跟頂部跑馬燈那個 IIFE放一起——頂部跑馬燈的 `<script>` 在 `<body>` 一開頭就執行，那時候 `.topbar-inner` 裡的 `#installBtn` 還沒被瀏覽器解析出來，`getElementById` 會抓 `null`。安裝按鈕放在 `.topbar-inner`（跟「操作手冊」「⚙ API 設定」同排、同 `.btn` 樣式）。已用 Playwright 實測 Chromium 觸發 `beforeinstallprompt`、SW 註冊成功。
+
 ## 已知限制
 
 選滿10位人物對同一供應商同時發出10個請求，可能撞到該供應商的並發限流；`callLLM`內建的429重試多半能吸收，目前未做請求間隔stagger，若使用者反映經常性失敗可考慮加入150~300ms的請求間隔。
