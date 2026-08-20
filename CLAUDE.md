@@ -62,6 +62,7 @@
 - 版面採用`政府補助認證產生器`外的`行銷內容工具/Prompt`那套「fixed-overlay」整合模式（而非`flex-item`模式），因為本站`.topbar`是`position:sticky`而非包在`100vh`flex殼裡：`#marqueeBar`用`position:fixed;z-index:50`（高於`.topbar`的`z-index:40`），`body.has-marquee`把`body`推下30px、把`.topbar`的`top`也推到30px，避免跑馬燈蓋住或被蓋住。
 - `localStorage` key用本專案專屬的`mentorsMarquee`（各專案各自獨立key）。
 - 若這個共用端點未來換掉或Sheet內容調整，**跟mentors-panel程式碼無關**，不需要改本專案的程式；只有端點URL本身失效才需要更新。
+- **2026-08-20更新（`Code.gs`未改動、不需重新部署）**：`render()`新增`lastKey`（`JSON.stringify(items)`）比對，內容沒變就不重繪，CSS animation不再被重置歸零重跑；新增`appendParsedText()`／`buildTrackContent()`支援`[文字](https://...)`連結語法（`createTextNode`組DOM，避免XSS），資料格式仍是純字串陣列，向下相容。已commit＋push（GitHub Pages自動重新部署）。
 
 ## 頁尾與操作手冊的創作者資訊
 
