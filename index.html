@@ -388,7 +388,10 @@
     </div>
     <div class="field-row">
       <label for="aiKey">API 金鑰</label>
-      <input type="password" id="aiKey" autocomplete="off" placeholder="貼上你的 API key">
+      <span style="position:relative;display:block;">
+        <input type="password" id="aiKey" autocomplete="off" placeholder="貼上你的 API key" style="padding-right:34px;box-sizing:border-box;">
+        <button type="button" onclick="var i=this.previousElementSibling;i.type=i.type==='password'?'text':'password';this.textContent=i.type==='password'?'👁':'🙈';" title="顯示／隱藏金鑰" aria-label="顯示／隱藏金鑰" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:15px;padding:4px 6px;opacity:.65;line-height:1;">👁</button>
+      </span>
     </div>
     <div class="privacy-note">
       金鑰只會存在你目前使用的這個瀏覽器（localStorage），網站不會把金鑰傳到任何伺服器，也不會被我方看到或記錄。請勿在公用電腦上填寫；換瀏覽器或清除瀏覽資料後需要重新輸入。
