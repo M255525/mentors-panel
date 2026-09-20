@@ -151,6 +151,11 @@
     padding:12px 16px; max-width:80%; font-size:.92rem; box-shadow:var(--shadow);
   }
   .round-time{font-size:.68rem; color:var(--ink-faint); margin:6px 0 12px 2px;}
+  .round.is-debate .round-question{background:var(--accent); color:var(--accent-ink);}
+  .debate-sub-question{font-size:.76rem; color:var(--ink-soft); margin:4px 0 0 2px; font-style:italic;}
+  .round-actions{margin-top:14px; text-align:center;}
+  .btn-debate{border-color:var(--accent); color:var(--accent);}
+  .btn-debate:hover{background:var(--accent); color:var(--accent-ink);}
   .replies-grid{
     display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:14px;
   }
@@ -430,6 +435,7 @@ const QUICK_EXAMPLES = [
 
 const MAX_REPLY_TOKENS = 2048;
 const MAX_CONTINUE_ROUNDS = 5;
+const DEBATE_PROMPT_LABEL = "🗣️ 顧問們互相回應";
 
 /* ============ 狀態 ============ */
 
@@ -721,6 +727,25 @@ function buildMessages(personaId, currentRound){
   return messages;
 }
 
+/* 辯論回合：讓某位顧問看到「同一個基準回合」裡其他顧問的回答，針對他們的觀點做出回應。
+   跟 buildMessages() 的既有隔離設計（各角色互相看不到對方）刻意不同——辯論回合是使用者
+   主動觸發的例外情境，不是預設行為。基準回合可以是一般回合，也可以是另一個辯論回合
+   （藉此串出多輪辯論），由 debateRound.baseRoundId 決定要引用誰的回答。 */
+function buildDebateMessages(personaId, debateRound){
+  const baseRound = state.rounds.find(r => r.id === debateRound.baseRoundId);
+  const activeIds = Object.keys(debateRound.replies);
+  const othersText = activeIds
+    .filter(id => id !== personaId && baseRound.replies[id] && baseRound.replies[id].status === "done")
+    .map(id => `【${personaById[id].name}的回答】\n${baseRound.replies[id].text}`)
+    .join("\n\n");
+  const debateInstruction = `其他顧問針對同一個問題「${baseRound.question}」給出了以下回答：\n\n${othersText}\n\n請你維持自己一貫的思維框架，針對以上其他顧問的觀點做出回應——可以指出認同之處，也可以直接點出不同意或視角不同的地方並說明原因。不必重複你自己剛才已經講過的內容，直接切入對其他人觀點的回應。`;
+  return [
+    ...buildMessages(personaId, baseRound),
+    {role: "assistant", content: baseRound.replies[personaId].text},
+    {role: "user", content: debateInstruction}
+  ];
+}
+
 function submitQuestion(){
   const input = document.getElementById("questionInput");
   const question = input.value.trim();
@@ -775,6 +800,54 @@ function submitQuestion(){
   }
 }
 
+/* 觸發「讓顧問們互相回應」：baseRoundId 是使用者按下按鈕時所在的那個回合（可以是一般回合
+   或另一個辯論回合），只找出該回合裡「已成功回答」的人物才能進入辯論——沒回答成功的人
+   自然沒有觀點可以被別人回應，也沒有立場回應別人。 */
+function startDebateRound(baseRoundId){
+  const baseRound = state.rounds.find(r => r.id === baseRoundId);
+  if(!baseRound) return;
+  const activeIds = [...state.selectedIds].filter(id => baseRound.replies[id] && baseRound.replies[id].status === "done");
+  if(activeIds.length < 2) return;
+
+  const cfg = loadAiConfig();
+  if(!cfg.apiKey){ openAiPanel(); return; }
+
+  const debateRound = {
+    id: "r" + Date.now(),
+    question: DEBATE_PROMPT_LABEL,
+    baseRoundId: baseRound.id,
+    baseQuestionText: baseRound.question,
+    timestamp: new Date(),
+    replies: {},
+    isDebate: true
+  };
+  for(const pid of activeIds) debateRound.replies[pid] = {status: "pending"};
+  state.rounds.push(debateRound);
+  document.getElementById("roundsSection").style.display = "";
+  renderRounds();
+  requestAnimationFrame(() => {
+    document.getElementById("round-" + debateRound.id)?.scrollIntoView({behavior: "smooth", block: "start"});
+  });
+
+  for(const pid of activeIds){
+    const persona = personaById[pid];
+    const messages = buildDebateMessages(pid, debateRound);
+    callLLM(
+      cfg.provider, cfg.model, cfg.apiKey, persona.systemPrompt, messages,
+      (attempt, status) => {
+        debateRound.replies[pid].retryNote = `伺服器忙線中（HTTP ${status}），第 ${attempt} 次重試…`;
+        updateReplyCard(debateRound.id, pid);
+      }
+    ).then(result => {
+      debateRound.replies[pid] = {status: "done", text: result.text, truncated: result.truncated, continueCount: 0};
+      updateReplyCard(debateRound.id, pid);
+    }).catch(err => {
+      debateRound.replies[pid] = {status: "error", error: err.message || String(err)};
+      updateReplyCard(debateRound.id, pid);
+    });
+  }
+}
+
 function retryReply(roundId, personaId){
   const round = state.rounds.find(r => r.id === roundId);
   if(!round) return;
@@ -783,7 +856,7 @@ function retryReply(roundId, personaId){
   updateReplyCard(roundId, personaId);
 
   const persona = personaById[personaId];
-  const messages = buildMessages(personaId, round);
+  const messages = round.isDebate ? buildDebateMessages(personaId, round) : buildMessages(personaId, round);
   callLLM(
     cfg.provider, cfg.model, cfg.apiKey, persona.systemPrompt, messages,
     (attempt, status) => {
@@ -809,8 +882,9 @@ function continueReply(roundId, personaId){
 
   const priorText = current.text;
   const continueCount = (current.continueCount || 0) + 1;
+  const baseMessages = round.isDebate ? buildDebateMessages(personaId, round) : buildMessages(personaId, round);
   const messages = [
-    ...buildMessages(personaId, round),
+    ...baseMessages,
     {role: "assistant", content: priorText},
     {role: "user", content: "你剛才的回答在這裡被截斷了，請直接從斷句處自然接續下去，不要重複前面已經說過的內容，也不要重新寫開場白或前言，直接接續原本沒寫完的段落或句子。"}
   ];
@@ -895,20 +969,30 @@ function bindCardActions(roundId, personaId){
 
 function renderRounds(){
   const container = document.getElementById("roundsContainer");
-  container.innerHTML = state.rounds.map(round => `
-    <div class="round" id="round-${esc(round.id)}">
+  container.innerHTML = state.rounds.map(round => {
+    const doneCount = [...state.selectedIds].filter(pid => round.replies[pid] && round.replies[pid].status === "done").length;
+    const canDebate = doneCount >= 2;
+    const subQuestion = round.isDebate ? `<div class="debate-sub-question">針對：${esc(round.baseQuestionText || "")}</div>` : "";
+    return `
+    <div class="round ${round.isDebate ? "is-debate" : ""}" id="round-${esc(round.id)}">
       <div class="round-question">${esc(round.question)}</div>
+      ${subQuestion}
       <div class="round-time">${esc(fmtTime(round.timestamp))}</div>
       <div class="replies-grid">
         ${[...state.selectedIds].filter(pid => round.replies[pid]).map(pid => replyCardHtml(round, pid)).join("")}
       </div>
+      ${canDebate ? `<div class="round-actions"><button class="btn btn-sm btn-debate" data-debate-round="${esc(round.id)}" type="button">🗣️ 讓顧問們互相回應</button></div>` : ""}
     </div>
-  `).join("");
+  `;
+  }).join("");
   for(const round of state.rounds){
     for(const pid of [...state.selectedIds].filter(id => round.replies[id])){
       bindCardActions(round.id, pid);
     }
   }
+  container.querySelectorAll("[data-debate-round]").forEach(btn => {
+    btn.addEventListener("click", () => startDebateRound(btn.dataset.debateRound));
+  });
 }
 
 function updateReplyCard(roundId, personaId){
@@ -918,6 +1002,28 @@ function updateReplyCard(roundId, personaId){
   if(el){
     el.outerHTML = replyCardHtml(round, personaId);
     bindCardActions(roundId, personaId);
+  }
+  updateRoundActions(roundId);
+}
+
+/* 個別卡片是用 outerHTML 局部替換更新（見上），不會重跑 renderRounds()，
+   所以「讓顧問們互相回應」按鈕的顯示與否要在這裡跟著每次卡片更新即時重新判斷，
+   否則使用者要等到送出下一題、觸發整段重繪，按鈕才會姍姍來遲地冒出來。 */
+function updateRoundActions(roundId){
+  const round = state.rounds.find(r => r.id === roundId);
+  const roundEl = document.getElementById("round-" + roundId);
+  if(!round || !roundEl) return;
+  const doneCount = [...state.selectedIds].filter(pid => round.replies[pid] && round.replies[pid].status === "done").length;
+  const canDebate = doneCount >= 2;
+  let actionsEl = roundEl.querySelector(".round-actions");
+  if(canDebate && !actionsEl){
+    actionsEl = document.createElement("div");
+    actionsEl.className = "round-actions";
+    actionsEl.innerHTML = `<button class="btn btn-sm btn-debate" data-debate-round="${esc(roundId)}" type="button">🗣️ 讓顧問們互相回應</button>`;
+    roundEl.appendChild(actionsEl);
+    actionsEl.querySelector("[data-debate-round]").addEventListener("click", () => startDebateRound(roundId));
+  }else if(!canDebate && actionsEl){
+    actionsEl.remove();
   }
 }
 
@@ -934,7 +1040,8 @@ function clearRounds(){
 function buildTranscriptText(){
   const lines = ["AI人物顧問團 · 對話紀錄", "匯出時間：" + fmtTime(new Date()), "=".repeat(40)];
   for(const round of state.rounds){
-    lines.push("", "【提問】" + round.question, "時間：" + fmtTime(round.timestamp), "-".repeat(40));
+    const questionLine = round.isDebate ? `【${round.question}】針對：${round.baseQuestionText || ""}` : "【提問】" + round.question;
+    lines.push("", questionLine, "時間：" + fmtTime(round.timestamp), "-".repeat(40));
     for(const pid of [...state.selectedIds].filter(id => round.replies[id])){
       const p = personaById[pid];
       const r = round.replies[pid];

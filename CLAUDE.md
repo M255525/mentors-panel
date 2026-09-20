@@ -77,6 +77,21 @@
 
 **回饋機制與快取踩坑修正（2026-08-14，使用者實測回報「加入主畫面沒有功能」才發現兩層問題）**：(1) 原本無 `showToast` 時用「暫時置換按鈕文字」當提示，在工具列裡太不明顯，使用者完全沒注意到訊息出現過——改成 `window.alert(fallbackMessage())`，`deferredPrompt.prompt()` 也包 try/catch。(2) 改完使用者仍回報沒反應，追查發現 `service-worker.js` 的 `fetch(event.request)` 沒有繞過瀏覽器 HTTP 快取——GitHub Pages 對回應下 `Cache-Control: max-age=600`，10 分鐘內「network-first」名不符實，可能吃到舊版內容重新存進 Cache Storage。改成 `fetch(event.request, {cache:'reload'})` 強制略過 HTTP 快取，`CACHE_NAME` 同步升版 v1→v2 清掉已污染的快取。這是跟 `expense-tracker-pwa` 那次「install 階段 `cache.addAll()` 忘記加 `{cache:'reload'}`」同一個 bug class 的 runtime 版本，細節見 [[pwa-install-rollout]]。
 
+## 虛擬董事會辯論模式（2026-09-21 新增）
+
+既有設計刻意讓各角色互相隔離（`buildMessages()`只組裝該人物自己的問答歷史，看不到其他角色的回覆），避免思維框架互相污染。這個新功能是使用者主動觸發的**例外情境**：任何一個回合只要有 2 位以上顧問成功回答完成，該回合下方就會出現「🗣️ 讓顧問們互相回應」按鈕，按下去會另開一個新回合（`round.isDebate=true`），讓每位顧問各自看到「除了自己以外」其他顧問剛才針對同一問題的回答，並要求他們維持自己的思維框架對這些觀點做出回應（認同或反駁皆可）。
+
+- **`buildDebateMessages(personaId, debateRound)`**：辯論回合專用的訊息組裝函式，取代一般的`buildMessages()`。透過`debateRound.baseRoundId`找到要引用的基準回合，組出「其他顧問回答＋辯論指示」的user訊息，前面仍接著`buildMessages(personaId, baseRound)`重建該角色自己的歷史脈絡＋`{assistant: 他自己在基準回合的回答}`，讓多輪對話結構維持完整。
+- **`startDebateRound(baseRoundId)`**：建立新的辯論回合，只挑基準回合裡「已成功回答（status===done）」的顧問加入——沒答完的人自然沒有觀點可辯論、也沒立場回應別人。
+- **可以連續辯論多輪（鏈式）**：辯論回合本身也符合「2位以上已完成回答」的條件，一樣會冒出「🗣️ 讓顧問們互相回應」按鈕，`baseRoundId`永遠指向使用者按下按鈕當下所在的那個回合（不論是一般回合或辯論回合），所以可以一直往下鏈接出多輪辯論。
+- **`retryReply()`／`continueReply()`都改成先判斷`round.isDebate`**，是的話呼叫`buildDebateMessages()`而非`buildMessages()`，否則重試/接續辯論回合的失敗回覆時，會漏掉原本要引用的其他人觀點，變成一句沒頭沒尾的空泛回應。
+- **`round.question`對辯論回合固定存`DEBATE_PROMPT_LABEL`常數**（`"🗣️ 顧問們互相回應"`），實際引用其他人回答的完整文字只在呼叫API當下動態組裝、不存進`round.question`——代價是若辯論回合本身又被當作更下一輪辯論的基準（鏈式辯論的第3輪以後），`buildMessages()`重建歷史時只會看到這個generic標籤而非完整引用內容，是刻意接受的簡化（維持「一個回合共用同一個question」的既有資料模型，不為了辯論模式改動整體架構）。
+- **按鈕即時性**：因為個別卡片是用`updateReplyCard()`局部`outerHTML`替換更新（不會整段重跑`renderRounds()`），新增了`updateRoundActions(roundId)`在每次卡片更新後即時重新判斷「是否該顯示/隱藏辯論按鈕」，不必等到使用者送出下一題才會姍姍來遲地冒出來——這是實作過程中發現的真實邏輯漏洞，已修正並用Playwright驗證（stub `callLLM` 模擬回覆逐一完成，確認按鈕在達到2個done時即時出現）。
+- **視覺區分**：辯論回合的`.round-question`改用`--accent`底色（跟一般回合的深灰底區隔），下方多一行斜體小字顯示「針對：〈基準回合的問題〉」。
+- **匯出txt**：`buildTranscriptText()`辯論回合的提問行改顯示「【🗣️ 顧問們互相回應】針對：〈原問題〉」而非「【提問】」。
+- 已用Playwright + stub `window.callLLM`（不需真實金鑰）驗證：一般回合三人皆完成後按鈕正確出現、辯論回合正確排除自己只引用其他人的回答文字、鏈式辯論（辯論回合再次辯論）正確運作、辯論回合的retry正確帶上完整引用內容、手機版(375px)無橫向溢出。
+- **`mentors-panel-offline/`離線變體未同步套用此功能**（該子資料夾走服務代理/Ollama架構，跟本專案直連BYOK的`callLLM`實作不共用程式碼），如需要離線版也支援辯論模式，需另外移植。
+
 ## 已知限制
 
 選滿10位人物對同一供應商同時發出10個請求，可能撞到該供應商的並發限流；`callLLM`內建的429重試多半能吸收，目前未做請求間隔stagger，若使用者反映經常性失敗可考慮加入150~300ms的請求間隔。
