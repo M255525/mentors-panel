@@ -1,7 +1,7 @@
 {
-  "name": "AI人物顧問團",
-  "short_name": "AI人物顧問團",
-  "description": "多位人物思維顧問，針對人生規劃/工作任務提問",
+  "name": "AI 思維顧問團",
+  "short_name": "AI 思維顧問團",
+  "description": "12 個虛構思考角色，針對人生規劃/工作任務提問",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

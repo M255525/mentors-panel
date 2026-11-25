@@ -1,12 +1,13 @@
-# CLAUDE.md — mentors-panel
+# CLAUDE.md — mentors-panel（AI 思維顧問團，原名 AI人物顧問團）
 
-單檔前端網站：使用者可勾選 `nuwa-skill` 蒸餾出的12位人物視角思維顧問（黃仁勳、郭台銘、周杰倫、賈伯斯、科特勒、香奈兒、卡帕西、孫正義、史蒂芬·史匹柏、戴爾·卡內基、華倫·巴菲特、村上隆），針對人生規劃/工作任務/工作計畫等問題提問，被選中的角色各自以其思維框架獨立回覆、並列呈現。無建置步驟、無框架，直接開啟 `index.html`（`file://`）或以靜態伺服器託管即可，響應式支援桌機/平板/手機。
+**2026-11-25 智財權調整（使用者同意）**：原本 12 位真實人物（第一人稱扮演）全部移除，改成 12 個自行撰寫的**虛構思考角色**，與 `行銷內容工具/content-workflow-studio-cf/node-packs/pack-a.js` 的 `MENTORS_PERSONAS` 同一套（id、名稱、systemPrompt 相同，改一邊要同步另一邊）。**不可加入真實人物的姓名、語錄、生平，也不可要求 AI 以真實人物身分發言**（姓名權／人格權／代言誤認風險）。`scripts/build_personas.py`、`data/personas-source.json` 已刪除；舊角色的 localStorage 勾選會因 id 不存在自動略過。`mentors-panel-api` 仍是自己的舊版 `data/personas.json`（真實人物，未同步），重跑它的 `sync_personas.py` 就會換成新角色——但 `line-cs-bot` 依顧問姓名辨識訊息，換之前要一起檢查。
+
+單檔前端網站：使用者可勾選 12 個虛構思考角色，針對人生規劃/工作任務/工作計畫等問題提問，被選中的角色各自以其思維框架獨立回覆、並列呈現。無建置步驟、無框架，直接開啟 `index.html`（`file://`）或以靜態伺服器託管即可，響應式支援桌機/平板/手機。
 
 ## 架構
 
 - `index.html`：單檔，內嵌CSS/JS，無外部資源（`personas-data.js`除外）。
-- `personas-data.js`：`window.PERSONAS = [...]`，由 `scripts/build_personas.py` 產生，**不要手改**。
-- `data/personas-source.json`：機械萃取結果，**是這個repo內部的唯一真實來源**（因為 `~/.claude/skills/*-perspective/SKILL.md` 在使用者家目錄、不在這個repo裡，換到別台機器就讀不到）。
+- `personas-data.js`：`window.PERSONAS = [...]`，手寫維護（合法 JSON 外包 `window.PERSONAS = …;`，`mentors-panel-api` 的同步腳本靠這個格式）。欄位：id／name／tagline／avatarText／color／disclaimerShort／disclaimerFull／systemPrompt。
 - `manual.html`：操作手冊。
 
 ## API 金鑰處理（重要）
@@ -15,24 +16,6 @@
 - 金鑰只存於使用者瀏覽器 `localStorage`（key `mentorsApiConfig`），前端直接 `fetch()` 打 Claude/OpenAI/Gemini/OpenRouter 官方API，不會、也不可能在開發者這邊洩漏。
 - CORS處理與 `政府補助認證產生器/sbir-generator`、`行銷內容工具/Prompt`、`行銷內容工具/SocialPost` 同一套：Claude需`anthropic-dangerous-direct-browser-access: true` header；Gemini金鑰放`x-goog-api-key` header（不放URL query）；OpenAI/OpenRouter用`Authorization: Bearer`。429/500/503/529自動重試2次（間隔8s/16s），180秒逾時。
 - **與上述3個專案的差異**：本專案的 `callLLM(provider, model, apiKey, systemPrompt, messages, onRetry)` 支援多輪`messages`陣列（每位角色各自記得自己的問答歷史，但看不到其他角色的回覆），而非其他專案用的單輪`prompt`字串。這是本專案內獨立複製的版本，不是共用檔案；三個來源專案的`callLLM`若有安全性修正（例如CORS header變動），需要手動同步過來。
-
-## SKILL.md → personas-data.js 轉換管線
-
-`scripts/build_personas.py` 分兩階段：
-
-1. **`extract_sections()`**：讀取 `~/.claude/skills/<id>-perspective/SKILL.md`，去YAML frontmatter、用固定字串切除檔尾「本Skill由女媧・Skill造人術生成」版權區塊、按9個固定H2標題前綴（角色扮演規則/身份卡/核心心智模型/決策啟發式/表達DNA/人物時間線或關鍵節點/價值觀與反模式/智識譜系/誠實邊界）分類切段，捨棄「附錄：調研來源」整節。對誠實邊界等段落做**片語級**黑話替換（`快速檔`→`快速版`、`蒸餾`→`整理`等，見`JARGON_REPLACEMENTS`），轉換完做黑名單關鍵字掃描（`女媧`/`花叔`/`蒸餾`/`Quick Tier`等殘留就`raise`中止）。輸出 `data/personas-source.json`。
-2. **`build_persona_object()`**：套用腳本內人工維護的`PERSONA_META`常數（tagline/頭像縮寫/代表色/已故人物注記/特殊警語/語錄雙軌標註旗標），組裝`systemPrompt`與`disclaimerShort`/`disclaimerFull`，輸出 `personas-data.js`。
-
-**執行時機**：只在既有人物的SKILL.md被`nuwa-skill`重新蒸餾更新後才需要重跑 `python scripts/build_personas.py`；重跑後請 diff `data/personas-source.json` 與 `personas-data.js`，確認沒有覆蓋掉已經人工微調過的內容（例如`PERSONA_META`裡手調的措辭）才commit。若未來要新增第13位人物，記得同步在`PERSONA_IDS`與`PERSONA_META`各加一筆（2026-08-09新增第12位村上隆的做法可參考：先用`nuwa-skill`蒸餾出`~/.claude/skills/<person-id>-perspective/`，再補`PERSONA_IDS`與`PERSONA_META`兩筆，跑腳本即完成，網站前端因完全data-driven不需改`index.html`；記得同步更新`README.md`、`manual.html`與根目錄`CLAUDE.md`裡手打的人數/人物表格，這幾處不是data-driven；也記得`cp personas-data.js mentors-panel-offline/personas-data.js`同步離線版本）。**卡內基那次的改進，蒸餾巴菲特時漏接、蒸餾村上隆時已補回並驗證有效**：2026-08-08新增卡內基時曾把「若當前環境無工具存取權限」的處理直接寫進Phase 3初版；2026-08-09蒸餾巴菲特時這個做法沒被自動記住、Phase 3初版又漏寫了同一件事，直到Phase 5才補回來；同日稍晚蒸餾村上隆時記取教訓、Phase 3初版就主動內建「無工具環境fallback」與「多視角並列使用時」兩條規則，Phase 5雙agent精煉也證實這兩條規則寫得夠完整、未再遺漏——但同時新發現一個更細的坑：兩條規則各自寫好，不代表「兩者同時發生時」（無工具＋多視角並列同時成立，也就是mentors-panel的真實運作場景）該怎麼疊加會自動被想到，村上隆這次是Phase 5才補上合併規則與「Step 0環境自檢＋預設值」。**結論沒變**：這類做法目前仍只存在個別SKILL.md裡、沒有寫回`nuwa-skill`本身的模板（`~/.claude/skills/nuwa-skill/references/skill-template.md`或Phase 3指引），每次新蒸餾人物都可能重新踩坑或發現新的邊界情況，若要根治應考慮把這整組規則（含Step 0自檢、規則疊加時的處理）直接寫進nuwa-skill模板本身。
-
-**`SECTION_PREFIX_MAP`踩坑**：2026-08-08升級7位人物SKILL.md新增「回答工作流（Agentic Protocol）」章節時，一度忘記同步這張對照表，導致該章節被`extract_sections()`當成「未歸類章節」靜默捨棄、完全沒進到`systemPrompt`——8位人物裡有7位的「先查證再回答」指示因此在網站上實際失效過一段時間（腳本仍執行成功、無報錯，只在stdout印警告，非常容易被忽略）。日後SKILL.md模板若新增章節（不只是這次的Agentic Protocol），務必同步檢查`SECTION_PREFIX_MAP`與`build_system_prompt()`，並留意執行`build_personas.py`時的`[警告] 未歸類的章節標題`輸出。
-
-**特殊處理**（不要在重構時弄丟）：
-- 賈伯斯、香奈兒的`PERSONA_META.deceased`會在systemPrompt結尾額外附加「已故人物僅能反映生前言論」提醒，即使SKILL.md本文已經寫過類似的話也會重複附加一次——這是刻意的雙重保險，不是bug。
-- 香奈兒的`quoteTiering=True`會額外附加一句要求LLM延續「已查證原話 vs 廣泛流傳但存疑」雙軌標註的指示（她的SKILL.md本身就有這個機制，語錄真偽考據過，很多網傳「香奈兒名言」其實查無實證）。
-- 郭台銘的`specialCaution`會顯示在人物卡的ⓘ說明與首次選取的modal裡，警語原文取自其SKILL.md的誠實邊界章節。
-- 史蒂芬·史匹柏同時有`quoteTiering=True`（其SKILL.md表達DNA調研有做語錄真偽查證，網傳「史匹柏名言」多查無實據）與`specialCaution`（提醒其AI/串流產業立場仍在快速演變、且調研全程僅用英語來源）。
-- 戴爾·卡內基（1888-1955）同時有`deceased`、`quoteTiering=True`與`specialCaution`三者並用：他過世早於播客/訪談時代，「對話」調研維度資訊確實稀薄（SKILL.md誠實標註）；`specialCaution`警語提醒他的核心原則（「讓對方覺得是他自己的主意」）曾被查爾斯·曼森用於操縱信眾犯下謀殺案，回覆時會誠實揭露此侷限而非美化成萬用技巧；改姓年份、初婚年份等多個生平細節在史料間本身有出入，未強行統一。
 
 ## 前端行為重點
 
@@ -99,11 +82,6 @@
 ## 指令
 
 無建置/測試指令。修改`index.html`後直接用瀏覽器開啟驗證，或 `python -m http.server 8785 --directory "AI人物顧問/mentors-panel"` 暫起伺服器（已註冊於根目錄`.claude/launch.json`，名稱`mentors-panel`）。
-
-重新產生人物資料：
-```bash
-python scripts/build_personas.py
-```
 
 驗證`personas-data.js`格式：
 ```bash

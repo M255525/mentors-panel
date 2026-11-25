@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AI人物顧問團 · 多位人物思維顧問</title>
+<title>AI 思維顧問團 · 多種思考角色一起看問題</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#b8763f">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="AI人物顧問團">
+<meta name="apple-mobile-web-app-title" content="AI 思維顧問團">
 <style>
   :root{
     --bg: #f4f1ec;
@@ -314,7 +314,7 @@
 <div class="topbar">
   <div class="topbar-inner">
     <div class="brand">
-      <div class="brand-title">AI人物顧問團</div>
+      <div class="brand-title">AI 思維顧問團</div>
       <div class="brand-sub">選幾位思維顧問，聊聊你的人生規劃、工作任務或工作計畫</div>
     </div>
     <button class="btn" id="installBtn" type="button">📲 加入主畫面</button>
@@ -327,7 +327,7 @@
 
   <section>
     <h2 class="section-title">1 · 選擇顧問（可複選）</h2>
-    <p class="section-hint">每位角色都是AI根據公開資料整理出的思維框架推斷，不代表本人真實立場——選擇後會先看一次完整說明。</p>
+    <p class="section-hint">每位顧問都是自行設計的虛構思考角色，不代表任何真實人物——選擇後會先看一次說明。</p>
     <div class="persona-grid" id="personaGrid"></div>
   </section>
 
@@ -358,7 +358,7 @@
 </div>
 
 <footer class="site-footer">
-  本站所有回覆皆為AI依公開資料生成的角色扮演框架推斷，非人物本人真實觀點或授權內容，僅供啟發與練習用途參考，請勿作為法律、財務、醫療或其他專業領域的正式建議依據。
+  本站的顧問全部是自行設計的虛構思考角色，不代表任何真實人物；所有回覆皆由AI生成，僅供啟發與練習用途參考，請勿作為法律、財務、醫療或其他專業領域的正式建議依據。
   API金鑰僅存於您瀏覽器的localStorage，網站本身不會、也無法取得您的金鑰。
   <br>
   製作：Mark Tsai｜<a href="mailto:tsaimark@gmail.com">tsaimark@gmail.com</a>｜<a href="manual.html">操作手冊</a>
@@ -410,7 +410,7 @@
   </div>
 </div>
 
-<script src="personas-data.js?v=20260809b"></script>
+<script src="personas-data.js?v=20261125"></script>
 <script>
 /* Gemini 已下架／不存在的模型 ID 自動換成現役模型（2026-11 體檢）：新申請的 AI Studio 金鑰呼叫 2.5／2.0 系列會被拒；也順便去掉多打的空白與 models/ 前綴 */
 function geminiModelFix(m){var r={'gemini-2.5-flash': 'gemini-3.6-flash', 'gemini-2.5-flash-lite': 'gemini-3.5-flash-lite', 'gemini-2.5-pro': 'gemini-3.8-flash', 'gemini-2.0-flash': 'gemini-3.6-flash', 'gemini-2.0-flash-001': 'gemini-3.6-flash', 'gemini-2.0-flash-lite': 'gemini-3.1-flash-lite', 'gemini-1.5-flash': 'gemini-3.6-flash', 'gemini-1.5-pro': 'gemini-3.1-pro-preview', 'gemini-3-pro': 'gemini-3.1-pro-preview', 'gemini-3-pro-preview': 'gemini-3.1-pro-preview', 'gemini-3.5-pro': 'gemini-3.1-pro-preview', 'gemini-3.1-flash-lite-preview': 'gemini-3.1-flash-lite'};m=String(m||'').trim().replace(/^models\//,'');return r[m]||m;}
@@ -601,7 +601,7 @@ function saveAiPanel(){
   closeAiPanel();
 }
 
-/* ============ 人物選擇 grid ============ */
+/* ============ 顧問選擇 grid ============ */
 
 function esc(s){
   return String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -613,7 +613,6 @@ function renderPersonaGrid(){
     <div class="persona-card ${state.selectedIds.has(p.id) ? "selected" : ""}"
          style="--card-color:${esc(p.color)}" data-id="${esc(p.id)}" role="checkbox"
          aria-checked="${state.selectedIds.has(p.id)}" tabindex="0">
-      ${p.deceased ? `<span class="badge-deceased">已故</span>` : ""}
       <span class="info-btn" data-info="${esc(p.id)}" title="查看完整說明">ⓘ</span>
       <div class="avatar">${esc(p.avatarText)}</div>
       <div class="p-name">${esc(p.name)}</div>
@@ -947,18 +946,14 @@ function replyCardHtml(round, personaId){
     }
   }
 
-  const quoteNote = (p.quoteTiering && (r.status === "done" || r.status === "continuing"))
-    ? `<div class="quote-tier-note">此角色的引語習慣區分「已查證原話」與「廣泛流傳但存疑」，如需精確引用請留意回覆中的標註。</div>` : "";
-
   return `
     <div class="reply-card" style="--card-color:${esc(p.color)}" data-round="${esc(round.id)}" data-persona="${esc(personaId)}">
       <div class="reply-head">
         <div class="mini-avatar">${esc(p.avatarText)}</div>
         <div class="p-name">${esc(p.name)}</div>
-        <span class="ai-sim-tag">AI 模擬・非本人發言</span>
+        <span class="ai-sim-tag">虛構角色・AI 生成</span>
       </div>
       ${bodyHtml}
-      ${quoteNote}
       <div class="reply-foot">${esc(p.disclaimerShort)}</div>
     </div>
   `;
@@ -1044,7 +1039,7 @@ function clearRounds(){
 }
 
 function buildTranscriptText(){
-  const lines = ["AI人物顧問團 · 對話紀錄", "匯出時間：" + fmtTime(new Date()), "=".repeat(40)];
+  const lines = ["AI 思維顧問團 · 對話紀錄", "匯出時間：" + fmtTime(new Date()), "=".repeat(40)];
   for(const round of state.rounds){
     const questionLine = round.isDebate ? `【${round.question}】針對：${round.baseQuestionText || ""}` : "【提問】" + round.question;
     lines.push("", questionLine, "時間：" + fmtTime(round.timestamp), "-".repeat(40));
@@ -1058,7 +1053,7 @@ function buildTranscriptText(){
     }
     lines.push("", "=".repeat(40));
   }
-  lines.push("", "本文件由AI人物顧問團網站匯出，所有回覆為AI依公開資料生成的角色扮演框架推斷，不代表對應人物本人真實觀點或授權。");
+  lines.push("", "本文件由AI 思維顧問團網站匯出，顧問皆為虛構思考角色，所有回覆由AI生成，不代表任何真實人物的觀點。");
   return lines.join("\n");
 }
 
@@ -1070,7 +1065,7 @@ function downloadTranscript(){
   const a = document.createElement("a");
   const ts = new Date().toISOString().replace(/[:T]/g, "-").slice(0, 19);
   a.href = url;
-  a.download = `AI人物顧問_對話紀錄_${ts}.txt`;
+  a.download = `AI思維顧問_對話紀錄_${ts}.txt`;
   document.body.appendChild(a);
   a.click();
   a.remove();
@@ -1094,7 +1089,7 @@ function renderQuickExamples(){
 
 function init(){
   if(!window.PERSONAS || !window.PERSONAS.length){
-    document.getElementById("personaGrid").innerHTML = "<p>人物資料載入失敗，請確認 personas-data.js 是否存在。</p>";
+    document.getElementById("personaGrid").innerHTML = "<p>顧問資料載入失敗，請確認 personas-data.js 是否存在。</p>";
     return;
   }
 
