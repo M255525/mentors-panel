@@ -160,6 +160,7 @@
   .replies-grid{
     display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:14px;
   }
+  .ai-sim-tag{margin-left:auto; font-size:.68rem; padding:2px 8px; border-radius:999px; background:#fff4d6; color:#8a5a00; white-space:nowrap;}
   .reply-card{
     background:var(--bg-panel); border:1px solid var(--line); border-left:4px solid var(--card-color,var(--accent));
     border-radius:var(--radius); padding:14px 16px; box-shadow:var(--shadow); min-width:0;
@@ -954,6 +955,7 @@ function replyCardHtml(round, personaId){
       <div class="reply-head">
         <div class="mini-avatar">${esc(p.avatarText)}</div>
         <div class="p-name">${esc(p.name)}</div>
+        <span class="ai-sim-tag">AI 模擬・非本人發言</span>
       </div>
       ${bodyHtml}
       ${quoteNote}
