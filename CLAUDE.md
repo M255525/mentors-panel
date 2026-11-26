@@ -34,9 +34,12 @@
 - **下載txt**（`downloadTranscript()`）：把`state.rounds`組成純文字逐輪記錄（比照`小工具/SN-maker`、`行銷內容工具/Prompt`的Blob+`<a download>`寫法），檔名帶時間戳記。
 - 兩個按鈕都在`#roundsSection`的`.rounds-header`裡，只有送出過至少一輪對話後才會出現（`roundsSection`預設`display:none`）。
 
-## 瀏覽次數計數器
+## 標準五件套（2026-11-26 補齊）
 
-`#visitCounter`（頁尾）用免費第三方服務 [CounterAPI](https://counterapi.dev)（`api.counterapi.dev/v1/mentors-panel/pageviews/up`）記錄**累計頁面載入次數**，不是去重後的訪客數。純展示用途、無認證、匿名可寫，理論上任何人都能對這個公開的counter端點灌水，可接受風險（純虛榮數字，非安全或計費用途）。選這個而非工作區慣用的Google Apps Script後端，是因為需求極簡（只要一個會累加的數字），另起一個Sheet+Script部署的維運成本不划算；若之後這個免費服務停用或不穩定，換成別的counter API或自建都只需要改`COUNTER_URL`這一行。有`localStorage`（key `mentorsVisitCount`）快取上次讀到的數字，網路請求失敗時靜默顯示快取值或留空，不會拋錯影響頁面其他功能。
+- **訪客數**：改用工作區標準的 visitor-badge（`https://visitor-badge.laobi.icu/badge?page_id=m255525.mentorspanel`，`<img>` 放頁尾 `#visitCounter` 與 ⚙「關於本工具」），`tool-usage-analytics` 才掃得到；原本的 countapi.mileshilliard（及更早的 CounterAPI）腳本與 `mentorsVisitCount` 快取已移除。測試時要 route 擋掉 visitor-badge 請求，避免灌數字。
+- **使用警語**：`#warnOverlay`（`z-index:110`，要高於設定面板的 100，否則從 ⚙ 開會被蓋住）；首次造訪自動跳出一次（`mentorsWarnSeen`），頁面上看得到的入口：顧問區下方 `.warn-line`、頁尾、⚙「關於本工具」。所有 `data-act="warn|install|download|clear"` 走 document 事件委派。
+- **⚙ 常用設定**：頂列按鈕原「⚙ API 設定」改名，仍是 `#apiOverlay`／`openAiPanel()`；內容分三個 `<details class="set-sec">`：🤖 AI 服務與金鑰（`#ssvAi` 顯示服務商與是否填金鑰）、💬 對話與本機資料（下載／清除）、ℹ 關於本工具（創作者、手冊、警語、加入主畫面、訪客數）；展開狀態記在 `mentorsSettingsFold`（預設只展開 ai），「全部展開／收合」鈕；沒金鑰送出時用 `openAiPanel({section:"ai"})` 只展開 AI 區。跑馬燈必備，不放開關。
+- **創作者**：頁尾「👤 創作者 Mark Tsai（蔡豐全）」連 `manual.html#creator`（完整版證照／經歷）；手冊另有 `#warning` 使用警語、⚙ 常用設定說明。
 
 ## 共用頂部跑馬燈
 
@@ -53,7 +56,7 @@
 
 ## 加入主畫面（PWA，2026-08-14 新增）
 
-比照工作區 `expense-tracker-pwa` 的做法：`manifest.json`＋`icons/`（米色 `#f4f1ec` 背景、棕金 `#b8763f`「思」字圖示）＋`service-worker.js`（network-first＋同源快取備援，不需要每次改動升版 `CACHE_NAME`）。**安裝腳本刻意放在檔案最尾端**（`visitCounter` IIFE 之後、`</body>` 前），不是跟頂部跑馬燈那個 IIFE放一起——頂部跑馬燈的 `<script>` 在 `<body>` 一開頭就執行，那時候 `.topbar-inner` 裡的 `#installBtn` 還沒被瀏覽器解析出來，`getElementById` 會抓 `null`。安裝按鈕放在 `.topbar-inner`（跟「操作手冊」「⚙ API 設定」同排、同 `.btn` 樣式）。已用 Playwright 實測 Chromium 觸發 `beforeinstallprompt`、SW 註冊成功。
+比照工作區 `expense-tracker-pwa` 的做法：`manifest.json`＋`icons/`（米色 `#f4f1ec` 背景、棕金 `#b8763f`「思」字圖示）＋`service-worker.js`（network-first＋同源快取備援，不需要每次改動升版 `CACHE_NAME`）。**安裝腳本刻意放在檔案最尾端**（`</body>` 前），不是跟頂部跑馬燈那個 IIFE放一起——頂部跑馬燈的 `<script>` 在 `<body>` 一開頭就執行，那時候 `.topbar-inner` 裡的 `#installBtn` 還沒被瀏覽器解析出來，`getElementById` 會抓 `null`。安裝按鈕放在 `.topbar-inner`（跟「操作手冊」「⚙ 常用設定」同排、同 `.btn` 樣式）。已用 Playwright 實測 Chromium 觸發 `beforeinstallprompt`、SW 註冊成功。
 
 
 **iOS／iPadOS／macOS 相容性補強（2026-08-14 同日追加）**：Safari（含 iOS 上的 Chrome/Firefox，底層都是 WebKit）**永遠不會觸發 `beforeinstallprompt`**，原本的按鈕邏輯在這些瀏覽器上一律落入「瀏覽器不支援」這句話，其實是誤導——蘋果裝置本來就能加入主畫面，只是要透過分享選單手動操作，不像 Chrome/Edge 有自動彈窗。修法：安裝腳本新增 `isIOSDevice`（`/iPad|iPhone|iPod/` 或 `navigator.platform==='MacIntel' && maxTouchPoints>1`——後者是因為 iPadOS 13+ 預設偽裝成 Mac 桌面版 UA，要用觸控點數才分得出來是 iPad 還是真的 Mac）與 `isMacDesktop && isSafariEngine`（macOS 桌面版 Safari 17+ 是「檔案→加入 Dock」，跟手機的分享選單操作不同）兩種判斷，各自顯示對應的操作指引文字，不再顯示「不支援」；`isStandalone`（`matchMedia('(display-mode: standalone)')` 或 iOS 專有的 `navigator.standalone`）為真時直接隱藏按鈕（已經是安裝後開啟，不需要再顯示安裝按鈕）。`<head>` 同步補上 `apple-touch-icon`（180×180 專用尺寸，`icons/apple-touch-icon.png`，純色不透明背景）＋ `apple-mobile-web-app-capable`／`mobile-web-app-capable`（兩個都要，前者給 Safari、後者是 Chrome 主張的新標準，只寫一個 Chrome 會在主控台噴 deprecation warning）＋ `apple-mobile-web-app-status-bar-style`／`apple-mobile-web-app-title`。這五個判斷/訊息字串在全部 9 個已加裝 PWA 的專案裡是逐字複製的同一段邏輯，日後若要調整任一處的措辭或判斷式，建議九個一起改，避免各專案的安裝體驗不一致。

@@ -211,6 +211,27 @@
   footer.site-footer{max-width:1180px; margin:60px auto 0; padding:20px; text-align:center; font-size:.74rem; color:var(--ink-faint);}
   footer.site-footer a{color:var(--ink-soft);}
   .visit-counter{margin-top:8px; font-size:.68rem; color:var(--ink-faint); min-height:1em;}
+  .visit-counter img{vertical-align:middle;}
+  footer.site-footer button.link-btn, .warn-line button{background:none; border:0; padding:0; font:inherit; color:var(--danger); font-weight:700; text-decoration:underline; cursor:pointer;}
+  #warnOverlay{z-index:110;} /* 從 ⚙ 常用設定裡開警語時要蓋在設定面板上面 */
+  .warn-line{margin:8px 0 0; font-size:.8rem; color:var(--ink-soft);}
+  .warn-list{margin:0; padding-left:1.2em; font-size:.86rem; line-height:1.75;}
+  .warn-list li{margin-bottom:4px;}
+
+  /* ⚙ 常用設定：收合式區塊 */
+  .modal.modal-wide{max-width:560px;}
+  .set-tools{display:flex; justify-content:flex-end; margin:-6px 0 8px;}
+  .set-sec{border:1px solid var(--line); border-radius:10px; margin-bottom:8px; background:#fff;}
+  .set-sec>summary{list-style:none; cursor:pointer; display:flex; gap:8px; align-items:center; padding:10px 12px; font-weight:700; font-size:.9rem; min-height:44px;}
+  .set-sec>summary::-webkit-details-marker{display:none;}
+  .set-sec>summary::after{content:"▸"; transition:transform .2s; color:var(--ink-faint);}
+  .set-sec[open]>summary::after{transform:rotate(90deg);}
+  .set-sec .sst{flex:1 1 0;}
+  .set-sec .ssv{font-weight:500; font-size:.75rem; color:var(--ink-soft); text-align:right;}
+  .set-body{padding:2px 12px 12px;}
+  .set-body p{font-size:.84rem; line-height:1.7; margin:0 0 8px;}
+  .set-btns{display:flex; flex-wrap:wrap; gap:8px;}
+  .set-btns .btn{font-size:.8rem; text-decoration:none;}
 
   @media (max-width:1023px){
     .replies-grid{grid-template-columns:repeat(2,1fr);}
@@ -319,7 +340,7 @@
     </div>
     <button class="btn" id="installBtn" type="button">📲 加入主畫面</button>
     <button class="btn" id="btnManual" type="button">操作手冊</button>
-    <button class="btn" id="btnApiSettings" type="button">⚙ API 設定</button>
+    <button class="btn" id="btnApiSettings" type="button">⚙ 常用設定</button>
   </div>
 </div>
 
@@ -328,6 +349,7 @@
   <section>
     <h2 class="section-title">1 · 選擇顧問（可複選）</h2>
     <p class="section-hint">每位顧問都是自行設計的虛構思考角色，不代表任何真實人物——選擇後會先看一次說明。</p>
+    <p class="warn-line">回覆由 AI 生成，可能有錯誤，只供啟發參考，不能當成法律、財務、醫療等專業建議。<button type="button" data-act="warn">⚠ 使用警語</button></p>
     <div class="persona-grid" id="personaGrid"></div>
   </section>
 
@@ -361,9 +383,27 @@
   本站的顧問全部是自行設計的虛構思考角色，不代表任何真實人物；所有回覆皆由AI生成，僅供啟發與練習用途參考，請勿作為法律、財務、醫療或其他專業領域的正式建議依據。
   API金鑰僅存於您瀏覽器的localStorage，網站本身不會、也無法取得您的金鑰。
   <br>
-  製作：Mark Tsai｜<a href="mailto:tsaimark@gmail.com">tsaimark@gmail.com</a>｜<a href="manual.html">操作手冊</a>
-  <div id="visitCounter" class="visit-counter"></div>
+  👤 創作者 <a href="manual.html#creator">Mark Tsai（蔡豐全）</a>｜<a href="mailto:tsaimark@gmail.com">tsaimark@gmail.com</a>｜<a href="manual.html">📖 操作手冊</a>｜<button type="button" class="link-btn" data-act="warn">⚠ 使用警語</button>
+  <div id="visitCounter" class="visit-counter">訪客數 <img src="https://visitor-badge.laobi.icu/badge?page_id=m255525.mentorspanel" alt="訪客次數" height="20" loading="lazy"></div>
 </footer>
+
+<!-- 使用警語 modal（首次造訪自動跳出一次） -->
+<div class="modal-overlay" id="warnOverlay">
+  <div class="modal">
+    <h3>⚠ 使用警語</h3>
+    <div class="modal-sub">開始使用前請先看過一次</div>
+    <ul class="warn-list">
+      <li>本站的 12 位顧問都是自行設計的<strong>虛構思考角色</strong>，不代表、也不模仿任何真實人物；請不要要求 AI 以真實人物的身分發言。</li>
+      <li>所有回覆都由你選用的 AI 服務即時生成，<strong>可能有錯誤、過時或編造的內容</strong>，只供啟發與練習參考，不能當成法律、財務、醫療、投資或其他專業領域的正式建議。重要決定請自行查證或請教專業人士。</li>
+      <li>你輸入的問題會送到你自己選的 AI 服務商（Claude／OpenAI／Gemini／OpenRouter），依該服務的隱私條款處理；<strong>請不要輸入身分證字號、帳號密碼、病歷等敏感個資</strong>。</li>
+      <li>API 金鑰只存在你這個瀏覽器（localStorage），本站沒有後端、拿不到你的金鑰；請勿在公用電腦填寫。API 費用由你與服務商結算。</li>
+      <li>Claude、OpenAI、Gemini、OpenRouter 等為各公司的商標，本站與這些公司無關，屬非官方工具。</li>
+    </ul>
+    <div class="modal-actions">
+      <button class="btn btn-primary" id="warnOk" type="button">我知道了</button>
+    </div>
+  </div>
+</div>
 
 <!-- 免責聲明 / 特殊警語 modal -->
 <div class="modal-overlay" id="disclaimerOverlay">
@@ -382,9 +422,15 @@
 
 <!-- API 金鑰設定 modal -->
 <div class="modal-overlay" id="apiOverlay">
-  <div class="modal">
-    <h3>API 金鑰設定</h3>
-    <div class="modal-sub">選一家你自己有帳號的LLM服務商，貼上你自己的API金鑰</div>
+  <div class="modal modal-wide">
+    <h3>⚙ 常用設定</h3>
+    <div class="modal-sub">點標題展開或收合；目前值顯示在右側</div>
+    <div class="set-tools"><button class="btn btn-sm" id="setFoldAll" type="button">全部展開／收合</button></div>
+
+    <details class="set-sec" data-sec="ai">
+    <summary><span class="sst">🤖 AI 服務與金鑰</span><span class="ssv" id="ssvAi"></span></summary>
+    <div class="set-body">
+    <p style="font-size:.78rem;color:var(--ink-soft)">選一家你自己有帳號的 LLM 服務商，貼上你自己的 API 金鑰，再按下方「儲存」。</p>
     <div class="field-row">
       <label for="aiProvider">服務商</label>
       <select id="aiProvider"></select>
@@ -403,6 +449,33 @@
     <div class="privacy-note">
       金鑰只會存在你目前使用的這個瀏覽器（localStorage），網站不會把金鑰傳到任何伺服器，也不會被我方看到或記錄。請勿在公用電腦上填寫；換瀏覽器或清除瀏覽資料後需要重新輸入。
     </div>
+    </div>
+    </details>
+
+    <details class="set-sec" data-sec="data">
+    <summary><span class="sst">💬 對話與本機資料</span><span class="ssv" id="ssvData"></span></summary>
+    <div class="set-body">
+      <p>對話只存在這個分頁的記憶體，重新整理就會消失；要保留請先下載。</p>
+      <div class="set-btns">
+        <button class="btn" type="button" data-act="download">⬇ 下載對話 txt</button>
+        <button class="btn" type="button" data-act="clear">🗑 清除對話</button>
+      </div>
+    </div>
+    </details>
+
+    <details class="set-sec" data-sec="about">
+    <summary><span class="sst">ℹ 關於本工具</span><span class="ssv"></span></summary>
+    <div class="set-body">
+      <p>👤 創作者 Mark Tsai（蔡豐全）<br><a href="manual.html#creator" target="_blank">創作者資料與聯絡方式</a></p>
+      <div class="set-btns">
+        <a class="btn" href="manual.html" target="_blank">📖 操作手冊</a>
+        <button class="btn" type="button" data-act="warn">⚠ 使用警語</button>
+        <button class="btn" type="button" data-act="install" id="setInstall">📲 加入主畫面</button>
+      </div>
+      <p style="margin-top:10px">訪客數 <img src="https://visitor-badge.laobi.icu/badge?page_id=m255525.mentorspanel" alt="訪客次數" height="20" loading="lazy" style="vertical-align:middle"></p>
+    </div>
+    </details>
+
     <div class="modal-actions">
       <button class="btn" id="apiCancel" type="button">關閉</button>
       <button class="btn btn-primary" id="apiSave" type="button">儲存</button>
@@ -429,7 +502,9 @@ const AI_PROVIDERS = {
 const STORAGE_KEYS = {
   apiConfig: "mentorsApiConfig",
   selectedIds: "mentorsSelectedIds",
-  seenDisclaimers: "mentorsSeenDisclaimers"
+  seenDisclaimers: "mentorsSeenDisclaimers",
+  settingsFold: "mentorsSettingsFold",
+  warnSeen: "mentorsWarnSeen"
 };
 
 const QUICK_EXAMPLES = [
@@ -588,8 +663,34 @@ function initAiPanel(){
   });
 }
 
-function openAiPanel(){ document.getElementById("apiOverlay").classList.add("open"); }
+function refreshSettingValues(){
+  const cfg = loadAiConfig();
+  const p = AI_PROVIDERS[cfg.provider];
+  document.getElementById("ssvAi").textContent = cfg.apiKey ? ((p ? p.label : cfg.provider) + "・已填金鑰") : "尚未填金鑰";
+  document.getElementById("ssvData").textContent = state.rounds.length ? (state.rounds.length + " 輪對話") : "尚無對話";
+}
+function openAiPanel(opts){
+  refreshSettingValues();
+  const open = (opts && opts.section) ? [opts.section] : loadFold();
+  document.querySelectorAll("#apiOverlay .set-sec").forEach(d => { d.open = open.indexOf(d.dataset.sec) >= 0; });
+  document.getElementById("apiOverlay").classList.add("open");
+}
 function closeAiPanel(){ document.getElementById("apiOverlay").classList.remove("open"); }
+function loadFold(){
+  try{ const v = JSON.parse(localStorage.getItem(STORAGE_KEYS.settingsFold)); return Array.isArray(v) ? v : ["ai"]; }catch(e){ return ["ai"]; }
+}
+function saveFold(){
+  const o = [];
+  document.querySelectorAll("#apiOverlay .set-sec").forEach(d => { if(d.open) o.push(d.dataset.sec); });
+  try{ localStorage.setItem(STORAGE_KEYS.settingsFold, JSON.stringify(o)); }catch(e){}
+}
+
+/* ============ 使用警語（頁面上看得到，首次造訪自動跳出一次） ============ */
+function showWarn(){ document.getElementById("warnOverlay").classList.add("open"); }
+function closeWarn(){
+  document.getElementById("warnOverlay").classList.remove("open");
+  try{ localStorage.setItem(STORAGE_KEYS.warnSeen, "1"); }catch(e){}
+}
 
 function saveAiPanel(){
   const cfg = {
@@ -766,7 +867,7 @@ function submitQuestion(){
   if(!cfg.apiKey){
     errEl.textContent = "請先設定 API 金鑰才能送出問題。";
     errEl.classList.add("show");
-    openAiPanel();
+    openAiPanel({section:"ai"});
     return;
   }
 
@@ -814,7 +915,7 @@ function startDebateRound(baseRoundId){
   if(activeIds.length < 2) return;
 
   const cfg = loadAiConfig();
-  if(!cfg.apiKey){ openAiPanel(); return; }
+  if(!cfg.apiKey){ openAiPanel({section:"ai"}); return; }
 
   const debateRound = {
     id: "r" + Date.now(),
@@ -1102,7 +1203,7 @@ function init(){
   renderQuickExamples();
   initAiPanel();
 
-  document.getElementById("btnApiSettings").addEventListener("click", openAiPanel);
+  document.getElementById("btnApiSettings").addEventListener("click", () => openAiPanel());
   document.getElementById("apiCancel").addEventListener("click", closeAiPanel);
   document.getElementById("apiSave").addEventListener("click", saveAiPanel);
   document.getElementById("apiOverlay").addEventListener("click", (e) => { if(e.target.id === "apiOverlay") closeAiPanel(); });
@@ -1120,42 +1221,45 @@ function init(){
 
   document.getElementById("btnClear").addEventListener("click", clearRounds);
   document.getElementById("btnDownload").addEventListener("click", downloadTranscript);
+
+  // ⚙ 常用設定：收合狀態記憶、全部展開／收合
+  document.querySelectorAll("#apiOverlay .set-sec").forEach(d => d.addEventListener("toggle", saveFold));
+  document.getElementById("setFoldAll").addEventListener("click", () => {
+    const d = document.querySelectorAll("#apiOverlay .set-sec");
+    const any = [...d].some(x => !x.open);
+    d.forEach(x => { x.open = any; });
+    saveFold();
+  });
+
+  // 使用警語、設定面板裡的動作按鈕（事件委派）
+  document.getElementById("warnOk").addEventListener("click", closeWarn);
+  document.getElementById("warnOverlay").addEventListener("click", (e) => { if(e.target.id === "warnOverlay") closeWarn(); });
+  document.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-act]");
+    if(!b) return;
+    const act = b.dataset.act;
+    if(act === "warn"){ e.preventDefault(); showWarn(); }
+    else if(act === "install"){ const ib = document.getElementById("installBtn"); if(ib) ib.click(); }
+    else if(act === "download"){
+      if(!state.rounds.length){ alert("目前還沒有對話可以下載。"); return; }
+      downloadTranscript();
+    }
+    else if(act === "clear"){
+      if(!state.rounds.length){ alert("目前沒有對話。"); return; }
+      clearRounds(); refreshSettingValues();
+    }
+  });
+  const isStandalone = (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) || window.navigator.standalone === true;
+  if(isStandalone){ const si = document.getElementById("setInstall"); if(si) si.style.display = "none"; }
+
+  let warnSeen = null;
+  try{ warnSeen = localStorage.getItem(STORAGE_KEYS.warnSeen); }catch(e){}
+  if(!warnSeen) showWarn();
 }
 
 document.addEventListener("DOMContentLoaded", init);
 </script>
 
-<script>
-(function () {
-  "use strict";
-  // 免費的 CountAPI 匿名計數器（countapi.mileshilliard.com，無需註冊/金鑰），每次頁面載入呼叫一次 hit 端點累加並取得目前總數。
-  // 純展示用途、非精確訪客統計；服務若無法連線就靜默失敗，不影響網站其他功能。
-  // 2026-08-08：原本用的 CounterAPI（api.counterapi.dev/v1）已停用（回傳410 Gone，v2改為需要帳號+API金鑰），
-  // 舊資料無法讀回、無從延續，改用另一個目前還活著的免費服務、計數從0重新開始，見 food-finder/CLAUDE.md「瀏覽次數計數器」一節的troubleshooting過程。
-  // 注意：這是公開共用的 key 命名空間，key 需夠獨特避免撞到其他使用者的計數器，不要改成通用字串（例如單純 "visits"）。
-  var COUNTER_URL = "https://countapi.mileshilliard.com/api/v1/hit/mentorspanel_tsaimark_visits";
-  var CACHE_KEY = "mentorsVisitCount";
-  var el = document.getElementById("visitCounter");
-  if (!el) return;
-
-  function render(n) {
-    el.textContent = "本站累計瀏覽次數：" + Number(n).toLocaleString("zh-TW");
-  }
-
-  var cached = localStorage.getItem(CACHE_KEY);
-  if (cached) render(cached);
-
-  fetch(COUNTER_URL)
-    .then(function (r) { return r.json(); })
-    .then(function (data) {
-      if (data && typeof data.value === "number") {
-        localStorage.setItem(CACHE_KEY, String(data.value));
-        render(data.value);
-      }
-    })
-    .catch(function () {});
-})();
-</script>
 <script>
 /* PWA 加入主畫面 — 獨立運作，跟上面主程式邏輯無關 */
 (function () {
